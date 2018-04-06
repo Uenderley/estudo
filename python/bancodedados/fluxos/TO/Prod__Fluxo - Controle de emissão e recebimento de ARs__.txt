@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Controle de emissão e recebimento de ARs">
+    <description><![CDATA[. Versão 2.0 - Noite]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Unidade de Processamento">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1338,60:5677,154:5948,154:5950,154:5483,154:1118,60:1118')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Controle de emissão e recebimento de ARs">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" swimlane="Unidade de Processamento" priority="3"/>
+        <transition to="Inserir informação de AR" name="Inserir informação de AR"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Inserir informação de AR">
+        <task name="Inserir informação de AR" swimlane="Unidade de Processamento" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_exped_controleCorreios" mapped-name="frame:WEB-INF_xhtml_flx_exped_controleCorreios" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Verificar cumprimento de AR" name="Verificar cumprimento de AR"/>
+        <transition to="Nó de Desvio - Fluxo - Controle de emissão e recebimento de ARs" name="Nó de Desvio - Fluxo - Controle de emissão e recebimento de ARs">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-create">
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:correios:registroCiencia', false)}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Verificar cumprimento de AR">
+        <task name="Verificar cumprimento de AR" swimlane="Unidade de Processamento" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_exped_controleCorreios" mapped-name="frame:WEB-INF_xhtml_flx_exped_controleCorreios" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Término" name="Registro de ciência finalizado"/>
+        <transition to="Nó de Desvio - Fluxo - Controle de emissão e recebimento de ARs" name="Nó de Desvio - Fluxo - Controle de emissão e recebimento de ARs">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Inserir informação de AR" name="Devolver para inserir informações de AR"/>
+        <event type="task-create">
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:correios:edicaoNumeroAR',false)}"/>
+        </event>
+    </task-node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Controle de emissão e recebimento de ARs">
+        <task name="Nó de Desvio - Fluxo - Controle de emissão e recebimento de ARs" swimlane="Nó de Desvio - Fluxo - Controle de emissão e recebimento de ARs" priority="3"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Inserir informação de AR" name="Inserir informação de AR"/>
+        <transition to="Verificar cumprimento de AR" name="Verificar cumprimento de AR"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event> 
+</process-definition>

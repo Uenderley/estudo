@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="iso-8859-1"?><process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Principal Corregedoria">
+    <description><![CDATA[versao1 Noite]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Principal Corregedoria">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1,84:1003')}"/>
+    </swimlane>
+    <swimlane name="Unidade Fiscalização de Cadastro">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23972:5950,23972:5483,23972:1118,23972:5948')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3" swimlane="Unidade Fiscalização de Cadastro"/>
+        <transition name="Gravar variáveis de fluxo" to="Gravar variáveis de fluxo"/>
+    </start-state>  
+    <!-- NODES -->
+    <node name="Gravar variáveis de fluxo">
+        <transition name="Verificar dados - Processo Corregedoria" to="Verificar dados - Processo Corregedoria"/>
+    </node>
+    <task-node end-tasks="true" name="Verificar dados - Processo Corregedoria">
+        <task name="Verificar dados - Processo Corregedoria" priority="3" swimlane="Unidade Fiscalização de Cadastro">
+            <controller>
+                <variable access="read,write" mapped-name="movimentarLote:movimentar_lote" name="movimentar_lote"/>
+                <variable access="read,write" mapped-name="frame:WEB-INF_xhtml_flx_definicaoobjeto" name="WEB-INF_xhtml_flx_definicaoobjeto"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Principal Corregedoria" to="Nó de Desvio - Fluxo - Principal Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Certificar e alterar dados - Processo Corregedoria" to="Certificar e alterar dados - Processo Corregedoria"/>
+        <transition name="Remeter ao gabinete sem retificar" to="Preparar ato judicial corregedoria"/>
+        <transition name="Remeter ao Cumprimento de Determinações " to="Apagar variáveis de fluxo"/>
+    </task-node>
+    <task-node end-tasks="true" name="Certificar e alterar dados - Processo Corregedoria">
+        <task name="Certificar e alterar dados - Processo Corregedoria" priority="3" swimlane="Unidade Fiscalização de Cadastro">
+            <controller>
+                <variable access="read,write" mapped-name="textAlert:var_avisoRetificacoProcesso" name="var_avisoRetificacoProcesso"/>
+                <variable access="read,write" mapped-name="page:Processo_RetificacaoAutuacao_updateRetificacaoAutuacao" name="Processo_RetificacaoAutuacao_updateRetificacaoAutuacao"/>
+                <variable access="read,write" mapped-name="frame:WEB-INF_xhtml_flx_definicaoobjeto" name="WEB-INF_xhtml_flx_definicaoobjeto"/>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_editorTexto" name="Processo_Fluxo_editorTexto"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Principal Corregedoria" to="Nó de Desvio - Fluxo - Principal Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Retornar Verificar dados" to="Verificar dados - Processo Corregedoria"/>
+        <transition name="Remeter ao gabinete sem certificar" to="Preparar ato judicial corregedoria"/>
+        <transition name="Prosseguir" to="Preparar ato judicial corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','57')}" name="upd"/>
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}" name="upd"/>
+        </event>
+    </task-node>
+    <process-state name="Preparar ato judicial corregedoria">
+        <sub-process binding="late" name="Fluxo - Preparação de ato judicial"/>
+        <transition name="testar cancelamento de paj" to="testar cancelamento de paj"/>
+    </process-state>
+    <decision expression="#{tramitacaoProcessualService.recuperaVariavel('pje:fluxo:paj:cancelada') ? 'T1' : 'T2'}" name="testar cancelamento de paj">
+        <transition name="T1" to="Certificar e alterar dados - Processo Corregedoria"/>
+        <transition name="T2" to="Lançamento de movimentos corregedoria"/>
+    </decision>
+    <process-state name="Lançamento de movimentos corregedoria">
+        <sub-process binding="late" name="Fluxo - Lançamento de Movimentos"/>
+        <transition name="Apagar variáveis de fluxo" to="Apagar variáveis de fluxo"/>
+    </process-state>
+    <node name="Apagar variáveis de fluxo">
+        <transition name="Cumprimento de determinações" to="Cumprimento de determinações"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}" name="upd"/>
+        </event>
+    </node>
+    <process-state name="Cumprimento de determinações">
+        <sub-process binding="late" name="Fluxo - Cumprimento de determinações - Corregedoria"/>
+        <transition name="Preparar remessa a origem - Processo Corregedoria" to="Preparar remessa a origem - Processo Corregedoria"/>
+    </process-state>
+    <task-node end-tasks="true" name="Preparar remessa a origem - Processo Corregedoria">
+        <task name="Preparar remessa a origem - Processo Corregedoria" priority="3" swimlane="Unidade Fiscalização de Cadastro">
+            <controller/>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Principal Corregedoria" to="Nó de Desvio - Fluxo - Principal Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Retornar para Analisar Determinação Processo Corregedoria" to="Cumprimento de determinações"/>
+        <transition name="Realizar baixa e arquivamento" to="Lançar baixa e arquivamento"/>
+        <transition name="Preparar ato judicial corregedoria" to="Preparar ato judicial corregedoria"/>
+        <transition name="Remeter ao TSE" to="Remeter ao TSE">
+            <condition expression="#{parametroUtil.getParametro('aplicacaoSistema') == '2'}"/>
+        </transition>
+    </task-node>
+    <process-state name="Remeter ao TSE">
+        <sub-process binding="late" name="Fluxo - Remessa para Instância Superior - Corregedoria"/>
+        <transition name="Preparar remessa a origem - Processo Corregedoria" to="Preparar remessa a origem - Processo Corregedoria"/>
+    </process-state>
+    <node name="Lançar baixa e arquivamento">
+        <transition name="Processos remetidos a origem" to="Processos remetidos a origem"/>
+        <event type="node-leave">
+            <action expression="#{preencherMovimento.deCodigo(246).lancarMovimento()}"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(22).lancarMovimento()}"/>
+        </event>
+    </node>
+    <process-state name="Processos remetidos a origem">
+        <sub-process binding="late" name="Fluxo - Expedir a origem Corregedoria"/>
+        <transition name="Término" to="Término"/>
+    </process-state>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Principal Corregedoria">
+        <task name="Nó de Desvio - Fluxo - Principal Corregedoria" priority="3" swimlane="Nó de Desvio - Fluxo - Principal Corregedoria"/>
+        <transition name="Término" to="Término"/>
+        <transition name="Verificar dados - Processo Corregedoria" to="Verificar dados - Processo Corregedoria"/>
+        <transition name="Certificar e alterar dados - Processo Corregedoria" to="Certificar e alterar dados - Processo Corregedoria"/>
+        <transition name="Preparar remessa a origem - Processo Corregedoria" to="Preparar remessa a origem - Processo Corregedoria"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

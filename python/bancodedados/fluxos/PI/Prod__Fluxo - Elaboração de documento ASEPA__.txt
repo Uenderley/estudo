@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="iso-8859-1"?><process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Elaboração de documento ASEPA">
+    <description><![CDATA[versão 2.0 noite.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Elaboração de documento ASEPA">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1338,3:1469,84:1')}"/>
+    </swimlane>
+    <swimlane name="Assessoria de Exame de Contas Eleitorais e Partidárias">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23965:5849,23965:5197')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition name="Apagar variáviel de fluxo" to="Apagar variáviel de fluxo"/>
+    </start-state>  
+    <!-- NODES -->
+    <node name="Apagar variáviel de fluxo">
+        <transition name="testar encaminhar SJD" to="testar encaminhar SJD"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:dgelaboradocumento:cancelada')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}" name="upd"/>
+        </event>
+    </node>
+    <decision expression="#{tramitacaoProcessualService.recuperaVariavel('pje:fluxo:encaminharSJD') ? 'T1' : 'T2'}" name="testar encaminhar SJD">
+        <transition name="T1" to="Término"/>
+        <transition name="T2" to="Lançar movimento recebido"/>
+    </decision>
+    <node name="Lançar movimento recebido">
+        <transition name="Analisar Processo - ASEPA" to="Analisar Processo - ASEPA"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(60042).lancarMovimento()}" name="upd"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Analisar Processo - ASEPA">
+        <task name="Analisar Processo - ASEPA" priority="3" swimlane="Assessoria de Exame de Contas Eleitorais e Partidárias">
+            <controller>
+                <variable access="read" mapped-name="movimentarLote:movimenta_lote" name="movimenta_lote"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Elaboração de documento ASEPA" to="Nó de Desvio - Fluxo - Elaboração de documento ASEPA">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Elaborar Documento - ASEPA" to="Elaborar Documento - ASEPA"/>
+        <transition name="Remeter Processo à Unidade Solicitante" to="Término"/>
+        <transition name="Remeter à SJD" to="gravar variável encaminhar a SJD"/>
+        <transition name="Remeter ao Gabinete do Relator" to="Lançar conclusão"/>
+    </task-node>
+    <node name="gravar variável encaminhar a SJD">
+        <transition name="Término" to="Término"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:encaminharSJD',true)}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Elaborar Documento - ASEPA">
+        <task name="Elaborar Documento - ASEPA" priority="3" swimlane="Assessoria de Exame de Contas Eleitorais e Partidárias">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_editorTexto" name="Processo_Fluxo_editorTexto"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Elaboração de documento ASEPA" to="Nó de Desvio - Fluxo - Elaboração de documento ASEPA">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Remeter processo - ASEPA" to="Remeter processo - ASEPA">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Remeter para assinatura" to="Assinar Documento - ASEPA"/>
+        <transition name="Cancelar" to="Analisar Processo - ASEPA"/>
+        <event type="task-start">
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Remeter processo - ASEPA')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','103,112,119')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Cancelar,Remeter para assinatura do ASEPA')}" name="upd"/>
+        </event>
+        <event type="node-leave">
+            <action expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}" name="upd"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Assinar Documento - ASEPA">
+        <task name="Assinar Documento - ASEPA" priority="3" swimlane="Assessoria de Exame de Contas Eleitorais e Partidárias">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_editorTexto" name="Processo_Fluxo_editorTexto"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Elaboração de documento ASEPA" to="Nó de Desvio - Fluxo - Elaboração de documento ASEPA">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Remeter processo - ASEPA" to="Lançar movimento de juntada ASEPA">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Cancelar" to="Analisar Processo - ASEPA"/>
+        <event type="task-create">
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Remeter processo - ASEPA')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','103,112,119')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Cancelar')}" name="upd"/>
+        </event>
+        <event type="node-leave">
+            <action expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}" name="upd"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de juntada ASEPA">
+        <transition name="Remeter processo - ASEPA" to="Remeter processo - ASEPA"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).preencherComTexto('Outros Documentos').lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Remeter processo - ASEPA">
+        <task name="Remeter processo - ASEPA" priority="3" swimlane="Assessoria de Exame de Contas Eleitorais e Partidárias">
+            <controller>
+                <variable access="read,write" mapped-name="movimentarLote:movimenta_lote" name="movimenta_lote"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Elaboração de documento ASEPA" to="Nó de Desvio - Fluxo - Elaboração de documento ASEPA">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Remeter Processo à Unidade Solicitante" to="Término"/>
+        <transition name="Remeter à SJD" to="gravar variável encaminhar a SJD"/>
+        <transition name="Remeter Gabinete do Relator" to="Lançar conclusão"/>
+        <transition name="Elaborar Documento - ASEPA" to="Elaborar Documento - ASEPA"/>
+        <event type="task-create">
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}" name="upd"/>
+        </event>
+    </task-node>
+    <node name="Lançar conclusão">
+        <transition name="Fluxo de Gabinetes" to="Fluxo de Gabinetes"/>
+        <event type="node-leave">
+            <action expression="#{tramitacaoProcessualService.deslocarFluxoParaOrgaoDiverso()}" name="upd"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(51).comComplementoDeCodigo(3).doTipoDominio().preencherComElementoDeCodigo(6).lancarMovimento()}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:cargoDestino')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:orgaoDestino')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:colegiadoDestino')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:substituicao:substituindo')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:orgaoPresidente')}" name="upd"/>
+        </event>
+    </node>
+    <process-state name="Fluxo de Gabinetes">
+        <sub-process binding="late" name="Fluxo - Gabinetes"/>
+        <transition name="testar encaminhar SJD" to="testar encaminhar SJD"/>
+    </process-state>
+    <node name="Gravar variável cancelamento fluxo">
+        <transition name="Término" to="Término"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:dgelaboradocumento:cancelada',true)}" name="upd"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Elaboração de documento ASEPA">
+        <task name="Nó de Desvio - Fluxo - Elaboração de documento ASEPA" priority="3" swimlane="Nó de Desvio - Fluxo - Elaboração de documento ASEPA"/>
+        <transition name="Término" to="Término"/>
+        <transition name="Remeter processo - ASEPA" to="Remeter processo - ASEPA"/>
+        <transition name="Elaborar Documento - ASEPA" to="Elaborar Documento - ASEPA"/>
+        <transition name="Assinar Documento - ASEPA" to="Assinar Documento - ASEPA"/>
+        <transition name="Analisar Processo - ASEPA" to="Analisar Processo - ASEPA"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

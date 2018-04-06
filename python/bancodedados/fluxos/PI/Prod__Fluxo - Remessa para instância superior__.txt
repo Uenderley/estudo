@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Remessa para Instância Superior">
+    <description><![CDATA[Versão 2.0 Noite]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Remessa para Instância Superior">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1,84:1003,84:1338,60:1338,3:1469')}"/>
+    </swimlane>
+    <swimlane name="Coordenadoria de Processamento">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:5483,60:1338,60:1118,154:5948,154:5950,154:5483,154:1118')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition to="Remeter ao TSE" name="Remeter ao TSE"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Remeter ao TSE">
+        <task name="Remeter ao TSE" swimlane="Coordenadoria de Processamento" priority="3">
+            <controller>
+                <variable name="Intercomunicacao_RetificacaoAutuacao_updateRetificacaoAutuacao" mapped-name="frame:Intercomunicacao_RetificacaoAutuacao_updateRetificacaoAutuacao" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Aguardando apreciação pela instância superior" name="Aguardando apreciação pela instância superior">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Nó de Desvio - Fluxo - Remessa para Instância Superior" name="Nó de Desvio - Fluxo - Remessa para Instância Superior">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Término" name="Cancelar"/>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstanceUtil.setVariable('comboMotivoRemessa', '18;90,37,38,39,40')}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Aguardando apreciação pela instância superior')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Aguardando apreciação pela instância superior">
+        <task name="Aguardando apreciação pela instância superior" swimlane="Coordenadoria de Processamento" priority="3">
+            <controller/>
+        </task>
+        <transition to="Recebimento de instância superior" name="Recebimento de instância superior">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Nó de Desvio - Fluxo - Remessa para Instância Superior" name="Nó de Desvio - Fluxo - Remessa para Instância Superior">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:aguardaInstanciaSuperior',true)}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Recebimento de instância superior')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{org.jboss.seam.bpm.processInstance.contextInstance.deleteVariable('pje:aguardaInstanciaSuperior')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Recebimento de instância superior">
+        <task name="Recebimento de instância superior" swimlane="Coordenadoria de Processamento" priority="3">
+            <controller/>
+        </task>
+        <description><![CDATA[]]></description>
+        <transition to="Término" name="Término"/>
+        <transition to="Nó de Desvio - Fluxo - Remessa para Instância Superior" name="Nó de Desvio - Fluxo - Remessa para Instância Superior">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Remessa para Instância Superior">
+        <task name="Nó de Desvio - Fluxo - Remessa para Instância Superior" swimlane="Nó de Desvio - Fluxo - Remessa para Instância Superior" priority="3"/>
+        <transition to="Remeter ao TSE" name="Remeter ao TSE"/>
+        <transition to="Aguardando apreciação pela instância superior" name="Aguardando apreciação pela instância superior"/>
+        <transition to="Recebimento de instância superior" name="Recebimento de instância superior"/>
+        <transition to="Término" name="Término"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

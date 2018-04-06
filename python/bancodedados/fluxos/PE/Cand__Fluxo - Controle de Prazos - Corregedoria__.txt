@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Controle de prazos - Corregedoria">
+    <description><![CDATA[Fluxo destinado a permitir o controle automatizado de prazos. Os processos pendentes ficam em um nó oculto.
+Versão 2.0 - Noite]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Controle de prazos - Corregedoria">
+        <assignment pooled-actors="#"/>
+    </swimlane>
+    <swimlane name="Assuntos Judiciarios - Corregedoria">
+        <assignment pooled-actors="#"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition to="Testa existência de expedientes" name="Testa existência de expedientes"/>
+    </start-state>  
+    <!-- NODES -->
+    <decision expression="#{atoComunicacaoService.getAtosComunicacaoAbertos(processoJudicialService.findById(org.jboss.seam.bpm.processInstance.contextInstance.getVariable('processo'))) &gt; 0 ? 'Processo com prazo em curso - Corregedoria' : 'Término'}" name="Testa existência de expedientes">
+        <transition to="Processo com prazo em curso - Corregedoria" name="Processo com prazo em curso - Corregedoria"/>
+        <transition to="Término" name="Término">
+            <condition expression="#{true}"/>
+        </transition>
+    </decision>
+    <task-node end-tasks="true" name="Processo com prazo em curso - Corregedoria">
+        <task name="Processo com prazo em curso - Corregedoria" swimlane="Assuntos Judiciarios - Corregedoria" priority="3">
+            <controller/>
+        </task>
+        <transition to="Verificar existência de outros pendentes" name="Verificar existência de outros pendentes"/>
+        <transition to="Nó de Desvio - Fluxo - Controle de prazos - Corregedoria" name="Nó de Desvio - Fluxo - Controle de prazos - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-end">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:aguardaPeticao')}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:aguardaPeticao', 'true')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Verificar existência de outros pendentes')}"/>
+        </event>
+    </task-node>
+    <decision expression="#{atoComunicacaoService.getAtosComunicacaoAbertos(processoJudicialService.findById(org.jboss.seam.bpm.processInstance.contextInstance.getVariable('processo'))) &gt; 0 ? 'Analisar manifestação' : 'Término'}" name="Verificar existência de outros pendentes">
+        <transition to="Término" name="Término">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar resposta do expediente - Corregedoria" name="Analisar manifestação"/>
+    </decision>
+    <task-node end-tasks="true" name="Analisar resposta do expediente - Corregedoria">
+        <task name="Analisar resposta do expediente - Corregedoria" swimlane="Assuntos Judiciarios - Corregedoria" priority="3">
+            <controller/>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Controle de prazos - Corregedoria" name="Nó de Desvio - Fluxo - Controle de prazos - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Término" name="Ignorar demais expedientes abertos"/>
+        <transition to="Testa existência de expedientes" name="Aguardar demais expedientes"/>
+    </task-node>
+    <end-state name="Término">
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:tramitacao:sobAnalisePrevencao')}"/>
+        </event>
+    </end-state>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Controle de prazos - Corregedoria">
+        <task name="Nó de Desvio - Fluxo - Controle de prazos - Corregedoria" swimlane="Nó de Desvio - Fluxo - Controle de prazos - Corregedoria" priority="3"/>
+        <transition to="Processo com prazo em curso - Corregedoria" name="Processo com prazo em curso - Corregedoria"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Analisar resposta do expediente - Corregedoria" name="Analisar resposta do expediente - Corregedoria"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

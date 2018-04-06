@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Análise de petições avulsas">
+    <description><![CDATA[Versão 25/10/2017]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Unidade de Processamento">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1338,60:5483,60:1118,154:5948,154:5950,154:5483,154:1118')}"/>
+    </swimlane>
+    <swimlane name="Lançar movimentação processual">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('4:5849,4:5197,4:1118')}"/>
+    </swimlane>
+    <swimlane name="Assessoria">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('4:5849,4:5197')}"/>
+    </swimlane>
+    <swimlane name="Assinar despacho petição avulsa">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('3:1469,4:5849')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Análise de petições avulsas">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1,84:1003')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" swimlane="Assessoria" priority="3"/>
+        <transition to="Verifica se já passou pelo Magistrado" name="Verifica se já passou pelo Magistrado"/>
+    </start-state>  
+    <!-- NODES -->
+    <decision expression="#{tramitacaoProcessualService.temMovimento('51') ? 'T1':'T2'}" name="Verifica se já passou pelo Magistrado">
+        <transition to="gravar variáveis de fluxo" name="T1"/>
+        <transition to="Apagar variáveis de fluxo" name="T2"/>
+    </decision>
+    <node name="gravar variáveis de fluxo">
+        <transition to="Petições não lidas" name="Petições não lidas"/>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.deslocarFluxoParaOrgaoDiverso()}"/>
+            <action expression="#{org.jboss.seam.bpm.processInstance.contextInstance.deleteVariable('MovimentosLancadosTemporariamente')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:peticaoAvulsa',true)}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:presidencia',false)}"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:orgaoDestino')}"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:orgaoCargoDestino')}"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:colegiadoDestino')}"/>
+        </event>
+    </node>
+    <node name="Desloca órgão Presidência">
+        <transition to="Petições não lidas" name="Petições não lidas"/>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.deslocarFluxoParaOrgaoDiverso()}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:deslocamento:orgaoDestino',2)}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:deslocamento:orgaoCargoDestino',2)}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:deslocamento:colegiadoDestino',2)}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:presidencia',true)}"/>
+        </event>
+    </node>
+    <node name="Retorna Relator do processo">
+        <transition to="Petições não lidas" name="Petições não lidas"/>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.deslocarFluxoParaOrgaoDiverso()}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:cargoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:orgaoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:colegiadoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:presidencia',false)}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Petições não lidas">
+        <task name="Petições não lidas" swimlane="Assessoria" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_visualizarPeticao" mapped-name="frame:WEB-INF_xhtml_flx_visualizarPeticao" access="read,write"/>
+                <variable name="movimentar_lote" mapped-name="movimentarLote:movimentar_lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Análise de petições avulsas" name="Nó de Desvio - Fluxo - Análise de petições avulsas">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Petições lidas" name="Remeter a petições lidas"/>
+        <transition to="Minutar ato - Petição avulsa" name="Minutar ato - Petição avulsa"/>
+        <transition to="Petições descartadas" name="Descartar fluxo"/>
+        <transition to="Desloca órgão Presidência" name="Remeter a Presidência"/>
+        <transition to="Retorna Relator do processo" name="Devolver ao Relator do processo"/>
+    </task-node>
+    <task-node end-tasks="true" name="Petições lidas">
+        <task name="Petições lidas" swimlane="Assessoria" priority="3">
+            <controller>
+                <variable name="movimentar_lote" mapped-name="movimentarLote:movimentar_lote" access="read,write"/>
+                <variable name="WEB-INF_xhtml_flx_visualizarPeticao" mapped-name="frame:WEB-INF_xhtml_flx_visualizarPeticao" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Análise de petições avulsas" name="Nó de Desvio - Fluxo - Análise de petições avulsas">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Petições não lidas" name="Remeter a petições não lidas"/>
+        <transition to="Minutar ato - Petição avulsa" name="Minutar ato - Petição avulsa"/>
+        <transition to="Desloca órgão Presidência" name="Remeter a Presidência"/>
+        <transition to="Retorna Relator do processo" name="Devolver ao Relator do processo"/>
+        <transition to="Petições descartadas" name="Descartar fluxo"/>
+    </task-node>
+    <task-node end-tasks="true" name="Minutar ato - Petição avulsa">
+        <task name="Minutar ato - Petição avulsa" swimlane="Assessoria" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+                <variable name="minuta_lote" mapped-name="minutarLote:minuta_lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Análise de petições avulsas" name="Nó de Desvio - Fluxo - Análise de petições avulsas">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Petições lidas" name="Remeter a petições lidas"/>
+        <transition to="Assinar ato - Petição avulsa" name="Remeter para assinatura">
+            <condition expression="#{org.jboss.seam.security.identity.hasRole('magistrado') == 'false'}"/>
+        </transition>
+        <transition to="Verifica se o processo existe na tarefa" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('tiposDisponiveisIds','63,64')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Assinar ato - Petição avulsa">
+        <task name="Assinar ato - Petição avulsa" swimlane="Assinar despacho petição avulsa" priority="4">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+                <variable name="assinar_lote" mapped-name="assinarLote:assinar_lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Análise de petições avulsas" name="Nó de Desvio - Fluxo - Análise de petições avulsas">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Minutar ato - Petição avulsa" name="Minutar ato - Petição avulsa"/>
+        <transition to="Verifica se o processo existe na tarefa" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote(&quot;63,64&quot;)}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('tiposDisponiveisIds','63,64')}"/>
+            <action/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',72,84)}"/>
+        </event>
+    </task-node>
+    <decision expression="#{(processoJudicialService.existeIdTarefaNoProcesso(tramitacaoProcessualService.recuperaProcesso(), 609) &gt; 0) ? 'T2' : 'T1'}" name="Verifica se o processo existe na tarefa">
+        <transition to="Apagar variáveis de fluxo" name="T2"/>
+        <transition to="Lançar movimento - Petição avulsa" name="T1"/>
+    </decision>
+    <task-node end-tasks="true" name="Lançar movimento - Petição avulsa">
+        <task name="Lançar movimento - Petição avulsa" swimlane="Lançar movimentação processual" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_visualizarDecisao" mapped-name="frame:Processo_Fluxo_visualizarDecisao" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Análise de petições avulsas" name="Nó de Desvio - Fluxo - Análise de petições avulsas">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Associar movimento" name="Remeter à SJD"/>
+        <event type="task-start">
+            <action name="Condicao do lancamento temporario de movimentos" expression="#{lancadorMovimentosService.setCondicaoLancamentoMovimentosTemporarioNoFluxo('#{false}')}"/>
+        </event>
+    </task-node>
+    <node name="Associar movimento">
+        <transition to="Verificar Decisão - Petição Avulsa" name="Verificar Decisão - Petição Avulsa"/>
+        <event type="node-leave">
+            <action expression="#{processoEventoManager.flush()}"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{processoEventoManager.recuperaUltimaMovimentacao(tramitacaoProcessualService.recuperaProcesso()).setProcessoDocumento(documentoJudicialService.getUltimoAtoJudicial(tramitacaoProcessualService.recuperaProcesso().processo))}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Verificar Decisão - Petição Avulsa">
+        <task name="Verificar Decisão - Petição Avulsa" swimlane="Unidade de Processamento" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_documentosProcessuais" mapped-name="frame:Processo_Fluxo_documentosProcessuais" access="read,write"/>
+                <variable name="movimentar_lote" mapped-name="movimentarLote:movimentar_lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Análise de petições avulsas" name="Nó de Desvio - Fluxo - Análise de petições avulsas">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Apagar variáveis de fluxo" name="Finalizar fluxo"/>
+        <transition to="Cumprimento de determinação de petição avulsa" name="Cumprimento de determinação de petição avulsa"/>
+        <transition to="gravar variáveis de fluxo" name="Remeter petição ao Relator"/>
+        <transition to="Desloca órgão Presidência" name="Remeter petição à Presidência"/>
+    </task-node>
+    <process-state name="Cumprimento de determinação de petição avulsa">
+        <sub-process name="Fluxo - Cumprimento de determinação" binding="late"/>
+        <transition to="Verificar Decisão - Petição Avulsa" name="Verificar Decisão - Petição Avulsa"/>
+    </process-state>
+    <task-node end-tasks="true" name="Petições descartadas">
+        <task name="Petições descartadas" swimlane="Assessoria" priority="3">
+            <controller>
+                <variable name="movimentar_lote" mapped-name="movimentarLote:movimentar_lote" access="read,write"/>
+                <variable name="WEB-INF_xhtml_flx_visualizarPeticao" mapped-name="frame:WEB-INF_xhtml_flx_visualizarPeticao" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Análise de petições avulsas" name="Nó de Desvio - Fluxo - Análise de petições avulsas">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Petições não lidas" name="Remeter a petições não lidas"/>
+        <transition to="Petições lidas" name="Remeter a petições lidas"/>
+        <transition to="Apagar variáveis de fluxo" name="Descartar fluxo"/>
+    </task-node>
+    <node name="Apagar variáveis de fluxo">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:peticaoAvulsa')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxoTipoDocumento:naoDuplicaFluxosMesmoProcesso')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:cargoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:orgaoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:colegiadoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:presidencia')}"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Análise de petições avulsas">
+        <task name="Nó de Desvio - Fluxo - Análise de petições avulsas" swimlane="Nó de Desvio - Fluxo - Análise de petições avulsas" priority="3"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Petições não lidas" name="Petições não lidas"/>
+        <transition to="Petições lidas" name="Petições lidas"/>
+        <transition to="Petições descartadas" name="Petições descartadas"/>
+        <transition to="Minutar ato - Petição avulsa" name="Minutar ato - Petição avulsa"/>
+        <transition to="Assinar ato - Petição avulsa" name="Assinar ato - Petição avulsa"/>
+        <transition to="Lançar movimento - Petição avulsa" name="Lançar movimento - Petição avulsa"/>
+        <transition to="Verificar Decisão - Petição Avulsa" name="Verificar Decisão - Petição Avulsa"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

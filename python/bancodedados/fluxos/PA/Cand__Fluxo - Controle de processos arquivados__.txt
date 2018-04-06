@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Controle de processos arquivados">
+    <description><![CDATA[. Noite]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Arquivo">
+        <assignment pooled-actors="#"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Controle de processos arquivados">
+        <assignment pooled-actors="#"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" swimlane="Arquivo" priority="3"/>
+        <transition to="Lançar Movimento de Arquivamento" name="Lançar Movimento de Arquivamento"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Classificar Processo para Arquivamento">
+        <task name="Classificar Processo para Arquivamento" swimlane="Arquivo" priority="3">
+            <controller>
+                <variable name="movimentar_em_lote" mapped-name="movimentarLote:movimentar_em_lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Lançar Movimento de Arquivamento" name="Registrar arquivamento"/>
+        <transition to="Nó de Desvio - Fluxo - Controle de processos arquivados" name="Nó de Desvio - Fluxo - Controle de processos arquivados">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>
+    <node name="Lançar Movimento de Arquivamento">
+        <transition to="Manter Processo Arquivado" name="Manter Processo Arquivado"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(246).lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Manter Processo Arquivado">
+        <task name="Manter Processo Arquivado" swimlane="Arquivo" priority="3">
+            <controller/>
+        </task>
+        <transition to="Término" name="Reativar Processo"/>
+        <transition to="Nó de Desvio - Fluxo - Controle de processos arquivados" name="Nó de Desvio - Fluxo - Controle de processos arquivados">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-end">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:aguardaPeticao')}"/>
+        </event>
+    </task-node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Controle de processos arquivados">
+        <task name="Nó de Desvio - Fluxo - Controle de processos arquivados" swimlane="Nó de Desvio - Fluxo - Controle de processos arquivados" priority="3"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Classificar Processo para Arquivamento" name="Classificar Processo para Arquivamento"/>
+        <transition to="Manter Processo Arquivado" name="Manter Processo Arquivado"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

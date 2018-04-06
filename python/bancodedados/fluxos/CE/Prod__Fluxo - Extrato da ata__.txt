@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="iso-8859-1"?><process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Extrato da ata">
+    <description><![CDATA[versão 2.0 noite.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Extrato da ata">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1338,84:1')}"/>
+    </swimlane>
+    <swimlane name="Elabora Extrato">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1338,60:5483,60:1118,155:5948,155:5950,155:5483,155:1118')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3" swimlane="Elabora Extrato"/>
+        <transition name="Elaborar extrato da ata" to="Elaborar extrato da ata"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Elaborar extrato da ata">
+        <task name="Elaborar extrato da ata" priority="3" swimlane="Elabora Extrato">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_editorTexto" name="Processo_Fluxo_editorTexto"/>
+                <variable access="read,write" mapped-name="movimentarLote:movientar_lote" name="movientar_lote"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Extrato da ata" to="Nó de Desvio - Fluxo - Extrato da ata">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Finalizar extrato da ata" to="Término">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Cancelar extrato" to="Término"/>
+        <event type="task-start">
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','166')}" name="upd"/>
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Finalizar extrato da ata')}" name="upd"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{tipoDocumento.set('Processo_Fluxo_editorTexto',166)}" name="upd"/>
+        </event>
+    </task-node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Extrato da ata">
+        <task name="Nó de Desvio - Fluxo - Extrato da ata" priority="3"/>
+        <transition name="Término" to="Término"/>
+        <transition name="Elaborar extrato da ata" to="Elaborar extrato da ata"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Lançamento de Movimentos">
+    <description><![CDATA[Versão 08 2017.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Unidade de Fiscalização e Cadastro">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23972:5948,23972:5950,23972:5483,23972:1118')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Lançamento de Movimentos">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1,84:1003')}"/>
+    </swimlane>
+    <swimlane name="Gabinete">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('4:5849,4:5197,4:1118,144:5849,144:1118,3:1469,46:1469')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition to="Deslocar OJ" name="Deslocar OJ"/>
+    </start-state>  
+    <!-- NODES -->
+    <node name="Deslocar OJ">
+        <transition to="Testar classes de Corregedoria Fiscalização e Cadastro" name="Testar classes de Corregedoria Fiscalização e Cadastro"/>
+        <event type="node-leave">
+            <action expression="#{org.jboss.seam.bpm.processInstance.contextInstance.deleteVariable('MovimentosLancadosTemporariamente')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.deslocarFluxoParaOrgaoDiverso()}"/>
+        </event>
+    </node>
+    <decision expression="#{(tramitacaoProcessualService.recuperaProcesso().classeJudicial.codClasseJudicial == 12063) || (tramitacaoProcessualService.recuperaProcesso().classeJudicial.codClasseJudicial == 12064) || (tramitacaoProcessualService.recuperaProcesso().classeJudicial.codClasseJudicial == 12065) ? 'T1' : 'T2'}" name="Testar classes de Corregedoria Fiscalização e Cadastro">
+        <transition to="Lançar movimento - Corregedoria" name="T1"/>
+        <transition to="Lançar movimento" name="T2"/>
+    </decision>
+    <task-node end-tasks="true" name="Lançar movimento">
+        <task name="Lançar movimento" swimlane="Gabinete" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_visualizarDecisao" mapped-name="frame:Processo_Fluxo_visualizarDecisao" access="read,write"/>
+            </controller>
+        </task>
+        <description><![CDATA[.]]></description>
+        <transition to="Nó de Desvio - Fluxo - Lançamento de Movimentos" name="Nó de Desvio - Fluxo - Lançamento de Movimentos">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="associar movimento" name="Remeter para outras unidades"/>
+        <transition to="associar movimento SJD" name="Remeter à SJD">
+            <condition expression="#{(tramitacaoProcessualService.recuperaProcesso().orgaoJulgador.idOrgaoJulgador != 36)}"/>
+        </transition>
+        <transition to="associar movimento SJD" name="Remeter processo">
+            <condition expression="#{(tramitacaoProcessualService.recuperaProcesso().orgaoJulgador.idOrgaoJulgador == 36)}"/>
+        </transition>
+        <event type="task-start">
+            <action name="Condicao do lancamento temporario de movimentos" expression="#{lancadorMovimentosService.setCondicaoLancamentoMovimentosTemporarioNoFluxo('#{false}')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:lancamentoMovimentoObrigatorio', 'true')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Lançar movimento - Corregedoria">
+        <task name="Lançar movimento - Corregedoria" swimlane="Unidade de Fiscalização e Cadastro" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_visualizarDecisao" mapped-name="frame:Processo_Fluxo_visualizarDecisao" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Lançamento de Movimentos" name="Nó de Desvio - Fluxo - Lançamento de Movimentos">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="associar movimento" name="Remeter processo"/>
+        <event type="task-start">
+            <action name="Condicao do lancamento temporario de movimentos" expression="#{lancadorMovimentosService.setCondicaoLancamentoMovimentosTemporarioNoFluxo('#{false}')}"/>
+        </event>
+    </task-node>
+    <node name="associar movimento">
+        <transition to="Término" name="Término"/>
+        <event type="node-leave">
+            <action expression="#{processoEventoManager.flush()}"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{processoEventoManager.recuperaUltimaMovimentacao(tramitacaoProcessualService.recuperaProcesso()).setProcessoDocumento(documentoJudicialService.getUltimoAtoJudicial(tramitacaoProcessualService.recuperaProcesso().processo))}"/>
+        </event>
+    </node>
+    <node name="associar movimento SJD">
+        <transition to="Término" name="Término"/>
+        <event type="node-leave">
+            <action expression="#{processoEventoManager.flush()}"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{processoEventoManager.recuperaUltimaMovimentacao(tramitacaoProcessualService.recuperaProcesso()).setProcessoDocumento(documentoJudicialService.getUltimoAtoJudicial(tramitacaoProcessualService.recuperaProcesso().processo))}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:encaminharSJD',true)}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Lançamento de Movimentos">
+        <task name="Nó de Desvio - Fluxo - Lançamento de Movimentos" swimlane="Nó de Desvio - Fluxo - Lançamento de Movimentos" priority="3"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Lançar movimento" name="Lançar Movimentos">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Lançar movimento - Corregedoria" name="Lançar movimento - Corregedoria"/>
+    </task-node>
+    <end-state name="Término">
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:tramitacao:sobAnalisePrevencao')}"/>
+        </event>
+    </end-state>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

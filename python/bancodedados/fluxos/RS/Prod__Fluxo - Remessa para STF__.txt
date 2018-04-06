@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Remessa para STF">
+    <description><![CDATA[Noite]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Remessa para STF">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1')}"/>
+    </swimlane>
+    <swimlane name="Coordenadoria de Processamento">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:5483,60:1338,60:1118,154:5948,154:5950,154:5483,154:1118')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" swimlane="Coordenadoria de Processamento" priority="3"/>
+        <transition to="Preparar remessa de manifestação processual para envio à instância superior" name="Preparar remessa de manifestação processual para envio à instância superior"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Preparar remessa de manifestação processual para envio à instância superior">
+        <task name="Preparar Manifestação Processual" swimlane="Coordenadoria de Processamento" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_remessaCNJ_prepararRemessaManifestacaoProcessual" mapped-name="frame:Processo_Fluxo_remessaCNJ_prepararRemessaManifestacaoProcessual" access="read"/>
+            </controller>
+        </task>
+        <description><![CDATA[]]></description>
+        <transition to="Nó de Desvio - Fluxo - Remessa para STF" name="Nó de Desvio - Fluxo - Remessa para STF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Remeter Manifestação Processual" name="Remeter Manifestação Processual"/>
+        <transition to="Término" name="Término"/>
+    </task-node>
+    <decision expression="#{remeterManifestacaoProcessualTaskPageAction.remeterManifestacaoProcessual() ?  'Término' : 'Acompanhar Manifestação Processual'}" name="Remeter Manifestação Processual">
+        <description><![CDATA[]]></description>
+        <transition to="Acompanhar Manifestação Processual" name="Acompanhar Manifestação Processual"/>
+        <transition to="Término" name="Término"/>
+    </decision>
+    <task-node end-tasks="true" name="Acompanhar Manifestação Processual">
+        <task name="Acompanhar Manifestação Processual" swimlane="Coordenadoria de Processamento" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_remessaCNJ_acompanharRemessaManifestacaoProcessual" mapped-name="frame:Processo_Fluxo_remessaCNJ_acompanharRemessaManifestacaoProcessual" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Término" name="Término">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Nó de Desvio - Fluxo - Remessa para STF" name="Nó de Desvio - Fluxo - Remessa para STF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Preparar remessa de manifestação processual para envio à instância superior" name="Preparar remessa de manifestação processual para envio à instância superior"/>
+    </task-node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Remessa para STF">
+        <task name="Nó de Desvio - Fluxo - Remessa para STF" swimlane="Nó de Desvio - Fluxo - Remessa para STF" priority="3"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Preparar remessa de manifestação processual para envio à instância superior" name="Preparar remessa de manifestação processual para envio à instância superior">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Acompanhar Manifestação Processual" name="Acompanhar Manifestação Processual">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event> 
+</process-definition>

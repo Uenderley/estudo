@@ -1,0 +1,17 @@
+server: 
+  port: 0
+  
+spring:
+  application:
+    name: app-server
+    
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+      
+app:
+  id: ${random.uuid}

@@ -12,7 +12,7 @@ public class CalculadorTeste {
 		Orcamento orcamento = new Orcamento(500.00, true);
 		
 		Double calculo = calculador.realizaCalculo(orcamento, imposto);
-		
+
 		Assert.assertEquals(new Double(40), calculo);
 	}
 	

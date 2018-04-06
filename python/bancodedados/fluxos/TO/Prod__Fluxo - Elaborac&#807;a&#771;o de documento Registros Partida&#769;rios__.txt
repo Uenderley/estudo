@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Elaboração de documento Registros Partidários">
+    <description><![CDATA[Versão 08 2017.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Unidade de Registros e Dados Partidários">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23813:5950,23813:5483,23813:5948,60:1338')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition to="Apagar variáviel de fluxo" name="Apagar variáviel de fluxo"/>
+    </start-state>  
+    <!-- NODES -->
+    <node name="Apagar variáviel de fluxo">
+        <transition to="testar encaminhar SJD" name="testar encaminhar SJD"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:encaminharAoRelator')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+        </event>
+    </node>
+    <decision expression="#{tramitacaoProcessualService.recuperaVariavel('pje:fluxo:encaminharSJD') ? 'T1' : 'T2'}" name="testar encaminhar SJD">
+        <transition to="Término" name="T1"/>
+        <transition to="Lançar movimento recebido" name="T2"/>
+    </decision>
+    <node name="Lançar movimento recebido">
+        <transition to="Analisar Processo - Registros Partidários" name="Analisar Processo - Registros Partidários"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(60056).lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Analisar Processo - Registros Partidários">
+        <task name="Analisar Processo - Registros Partidários" swimlane="Unidade de Registros e Dados Partidários" priority="3">
+            <controller>
+                <variable name="movimenta_lote" mapped-name="movimentarLote:movimenta_lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários" name="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - Registros Partidários" name="Elaborar Documento - Registros Partidários"/>
+        <transition to="Término" name="Remeter à SJD"/>
+        <transition to="Gravar variável -Remeter ao Relator" name="Remeter ao Gabinete Relator"/>
+    </task-node>
+    <task-node end-tasks="true" name="Elaborar Documento - Registros Partidários">
+        <task name="Elaborar Documento - Registros Partidários" swimlane="Unidade de Registros e Dados Partidários" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários" name="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Remeter processo - Registros Partidários" name="Remeter processo - Registros Partidários">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Assinar Documento - Registros Partidários" name="Remeter para assinatura"/>
+        <transition to="Analisar Processo - Registros Partidários" name="Cancelar"/>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Remeter processo - Registros Partidários')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','112,119')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Cancelar,Remeter para assinatura do Registros Partidários')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Assinar Documento - Registros Partidários">
+        <task name="Assinar Documento - Registros Partidários" swimlane="Unidade de Registros e Dados Partidários" priority="4">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários" name="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Lançar movimento de juntada Registros Partidários" name="Remeter processo - Registros Partidários">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - Registros Partidários" name="Cancelar"/>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Remeter processo - Registros Partidários')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','112,119')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Cancelar')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de juntada Registros Partidários">
+        <transition to="Remeter processo - Registros Partidários" name="Remeter processo - Registros Partidários"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).preencherComTexto('Outros Documentos').lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Remeter processo - Registros Partidários">
+        <task name="Remeter processo - Registros Partidários" swimlane="Unidade de Registros e Dados Partidários" priority="3">
+            <controller>
+                <variable name="movimenta_lote" mapped-name="movimentarLote:movimenta_lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários" name="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Apagar variáviel de fluxo" name="Analisar Processo"/>
+        <transition to="Término" name="Remeter Processo à SJD"/>
+        <transition to="Gravar variável -Remeter ao Relator" name="Remeter ao Gabinete Relator"/>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+        </event>
+    </task-node>
+    <node name="Gravar variável -Remeter ao Relator">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:encaminharAoRelator',true)}"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários">
+        <task name="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários" swimlane="Nó de Desvio - Fluxo - Elaboração de documento Registros Partidários" priority="3"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Remeter processo - Registros Partidários" name="Remeter processo - Registros Partidários"/>
+        <transition to="Elaborar Documento - Registros Partidários" name="Elaborar Documento - Registros Partidários"/>
+        <transition to="Assinar Documento - Registros Partidários" name="Assinar Documento - Registros Partidários"/>
+        <transition to="Analisar Processo - Registros Partidários" name="Analisar Processo - Registros Partidários"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

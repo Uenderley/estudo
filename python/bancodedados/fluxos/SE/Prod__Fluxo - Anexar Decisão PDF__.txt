@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="iso-8859-1"?><process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Anexar Decisão PDF">
+    <description><![CDATA[Fluxo 1.0 - 10_08_2017.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Anexar Decisão PDF">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1469')}"/>
+    </swimlane>
+    <swimlane name="Gabinete">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('3:5849,4:5849,4:5197,4:5855,3:1469')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3" swimlane="Gabinete"/>
+        <transition name="Anexar Decisão PDF" to="Anexar Decisão PDF"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Anexar Decisão PDF">
+        <task name="Anexar Decisão PDF" priority="3" swimlane="Gabinete">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_editorTexto" name="Processo_Fluxo_editorTexto"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Anexar Decisão PDF" to="Nó de Desvio - Fluxo - Anexar Decisão PDF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Cancelar" to="Gravar variável cancelamento"/>
+        <transition name="Lançar movimento" to="Apagar variáveis">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action expression="#{taskInstanceUtil.setVariable('mostrarBotaoGravarNoFluxo','false')}" name="upd"/>
+        </event>
+        <event type="task-create">
+            <action expression="#{tramitacaoProcessualService.gravaVariavel('tiposDisponiveisIds','63')}" name="upd"/>
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Lançar movimento')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Cancelar')}" name="upd"/>
+        </event>
+        <event type="node-leave">
+            <action expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:paj:cancelada:PDF',false)}" name="upd"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{org.jboss.seam.bpm.processInstance.contextInstance.deleteVariable('MovimentosLancadosTemporariamente')}" name="upd"/>
+        </event>
+    </task-node>
+    <node name="Gravar variável cancelamento">
+        <transition name="Término" to="Término"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:paj:cancelada:PDF',true)}" name="upd"/>
+        </event>
+    </node>
+    <node name="Apagar variáveis">
+        <transition name="Término" to="Término"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:paj:cancelada:PDF',false)}" name="upd"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Anexar Decisão PDF">
+        <task name="Nó de Desvio - Fluxo - Anexar Decisão PDF" priority="3" swimlane="Nó de Desvio - Fluxo - Anexar Decisão PDF"/>
+        <transition name="Término" to="Término"/>
+        <transition name="Anexar Decisão PDF" to="Anexar Decisão PDF"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Preparar ato judicial em recesso">
+    <description><![CDATA[Versão 2.0. - Tarde]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Revisor">
+        <assignment pooled-actors="#"/>
+    </swimlane>
+    <swimlane name="Assessoria">
+        <assignment pooled-actors="#"/>
+    </swimlane>
+    <swimlane name="Ministro">
+        <assignment pooled-actors="#"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Preparação de ato judicial">
+        <assignment pooled-actors="#"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" swimlane="Assessoria" priority="3"/>
+        <transition to="Desloca órgão julgador" name="Desloca órgão julgador"/>
+    </start-state>  
+    <!-- NODES -->
+    <node name="Desloca órgão julgador">
+        <transition to="Minutar ato em recesso" name="Minutar ato em recesso"/>
+        <event type="node-leave">
+            <action expression="#{org.jboss.seam.bpm.processInstance.contextInstance.deleteVariable('MovimentosLancadosTemporariamente')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.deslocarFluxoParaOrgaoDiverso()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Minutar ato em recesso">
+        <task name="Minutar ato em recesso" swimlane="Assessoria" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Preparar ato judicial em recesso" name="Nó de Desvio - Fluxo - Preparar ato judicial em recesso">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Escolher órgão julgador para assinatura" name="Escolher outro órgão julgador para assinatura">
+            <condition expression="#{tramitacaoProcessualService.recuperaVariavel('pje:fluxo:deslocamento:orgaoDestino')==2}"/>
+        </transition>
+        <transition to="Assinar ato em recesso" name="Remeter para assinatura"/>
+        <transition to="Revisar ato em recesso" name="Revisar ato em recesso"/>
+        <transition to="Apaga variaveis" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Apaga variaveis" name="Cancelar"/>
+        <event type="task-start">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','63,64')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.deleteVariableLocally('mostrarBotaoGravarNoFluxo')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Escolher órgão julgador para assinatura">
+        <task name="Escolher órgão julgador para assinatura" swimlane="Assessoria" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_subev_substituicaoeventual" mapped-name="frame:Processo_Fluxo_subev_substituicaoeventual" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Assinar ato em recesso" name="Assinar ato em recesso">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Nó de Desvio - Fluxo - Preparar ato judicial em recesso" name="Nó de Desvio - Fluxo - Preparar ato judicial em recesso">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Revisar ato em recesso" name="Cancelar"/>
+        <event type="task-start">
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Assinar ato em recesso')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.deslocarFluxoParaOrgaoDiverso()}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Revisar ato em recesso">
+        <task name="Revisar ato em recesso" swimlane="Revisor" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Preparar ato judicial em recesso" name="Nó de Desvio - Fluxo - Preparar ato judicial em recesso">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Escolher órgão julgador para assinatura" name="Escolher outro órgão julgador para assinatura">
+            <condition expression="#{tramitacaoProcessualService.recuperaVariavel('pje:fluxo:deslocamento:orgaoDestino')==2}"/>
+        </transition>
+        <transition to="Minutar ato em recesso" name="Devolver a minuta"/>
+        <transition to="Assinar ato em recesso" name="Remeter para assinatura"/>
+        <transition to="Apaga variaveis" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','63,64')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.deleteVariableLocally('mostrarBotaoGravarNoFluxo')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Assinar ato em recesso">
+        <task name="Assinar ato em recesso" swimlane="Ministro" priority="4">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+                <variable name="assinar_lote" mapped-name="assinarLote:assinar_lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Preparar ato judicial em recesso" name="Nó de Desvio - Fluxo - Preparar ato judicial em recesso">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Desloca órgão Julgador Presidência" name="Devolver a revisão">
+            <condition expression="#{tramitacaoProcessualService.recuperaVariavel('pje:fluxo:deslocamento:orgaoDestino')==2}"/>
+        </transition>
+        <transition to="Revisar ato em recesso" name="Devolver para revisão">
+            <condition expression="#{tramitacaoProcessualService.recuperaVariavel('pje:fluxo:deslocamento:orgaoDestino')!=2}"/>
+        </transition>
+        <transition to="Lançamento Movimentação" name="Lançar movimentos">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote(&quot;63,64&quot;)}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('tiposDisponiveisIds','63,64')}"/>
+            <action name="upd" expression="#{editorTextoService.obrigatorio()}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Lançar movimentos')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.deleteVariableLocally('mostrarBotaoGravarNoFluxo')}"/>
+        </event>
+    </task-node>
+    <process-state name="Lançamento Movimentação">
+        <sub-process name="Fluxo - Lançamento de Movimentos" binding="late"/>
+        <transition to="Apaga variaveis" name="Apaga variaveis"/>
+    </process-state>
+    <node name="Desloca órgão Julgador Presidência">
+        <transition to="Revisar ato em recesso" name="Revisar ato em recesso"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('minutaEmElaboracao')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:deslocamento:orgaoDestino',2)}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:deslocamento:orgaoCargoDestino',2)}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:deslocamento:colegiadoDestino',2)}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:orgaoPresidente',true)}"/>
+        </event>
+    </node>
+    <node name="Apaga variaveis">
+        <transition to="Término" name="Término"/>
+        <event type="node-leave">
+            <action expression="#{org.jboss.seam.bpm.processInstance.contextInstance.deleteVariable('MovimentosLancadosTemporariamente')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('minutaEmElaboracao')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:orgaoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:orgaoCargoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:colegiadoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:orgaoPresidente')}"/>
+        </event>
+    </node>
+    <end-state name="Término">
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:tramitacao:sobAnalisePrevencao')}"/>
+        </event>
+    </end-state>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Preparar ato judicial em recesso">
+        <task name="Nó de Desvio - Fluxo - Preparar ato judicial em recesso" priority="3"/>
+        <transition to="Minutar ato em recesso" name="MINUTAR ato em recesso"/>
+        <transition to="Término" name="Término">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Revisar ato em recesso" name="Revisar ato em recesso"/>
+        <transition to="Assinar ato em recesso" name="Assinar ato em recesso"/>
+        <transition to="Escolher órgão julgador para assinatura" name="Escolher órgão julgador para assinatura"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

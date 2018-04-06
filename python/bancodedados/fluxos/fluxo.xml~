@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?><process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - AnÃÂ¡lise de petiÃÂ§ÃÂµes avulsas">
+    <description><![CDATA[VersÃÂ£o 08 2017.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Unidade de Processamento">
+        <assignment pooled-actors="#"/>
+    </swimlane>
+    <swimlane name="Lançar movimentação processual">
+        <assignment pooled-actors="#"/>
+    </swimlane>
+    <swimlane name="Assessoria">
+        <assignment pooled-actors="#"/>
+    </swimlane>
+    <swimlane name="Assinar despacho petição avulsa">
+        <assignment pooled-actors="#"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Análise de petições avulsas">
+        <assignment pooled-actors="#"/>
+    </swimlane>  
+</process-definition>

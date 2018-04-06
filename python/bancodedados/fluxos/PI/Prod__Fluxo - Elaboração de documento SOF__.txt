@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Elaboração de documento SOF">
+    <description><![CDATA[versão 2.0 noite.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Unidade de Finanças e Contabilidade">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23970:5948,23970:5849,23970:5197,23970:5950,23970:5483')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1,84:1003,60:1338,3:1469')}"/>
+    </swimlane>
+    <swimlane name="Unidade de Orçamento de Despesas Obrigatórias e Custos">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23969:5948,23969:5849,23969:5197,23969:5950,23969:5483')}"/>
+    </swimlane>
+    <swimlane name="Secretaria de Orçamento">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23967:5849,23967:5197,23967:5972')}"/>
+    </swimlane>
+    <swimlane name="Unidade de Planejamento e Orçamentário">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23968:5948,23968:5849,23968:5197,23968:5950,23968:5483')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition to="Apagar variável de fluxo" name="Apagar variável de fluxo"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Taf1">
+        <task name="Taf1" swimlane="Unidade de Finanças e Contabilidade" priority="3"/>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento SOF" name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>
+    <node name="Apagar variável de fluxo">
+        <transition to="Testar encaminhar a SJD" name="Testar encaminhar a SJD"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:elaborarDocumentoSOF:cancelada')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:elaborarDocumentoSOF:ciencia')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+        </event>
+    </node>
+    <decision expression="#{tramitacaoProcessualService.recuperaVariavel('pje:fluxo:encaminharSJD') ? 'T1' : 'T2'}" name="Testar encaminhar a SJD">
+        <transition to="Término" name="T1"/>
+        <transition to="Lançar movimento recebido" name="T2"/>
+    </decision>
+    <node name="Lançar movimento recebido">
+        <transition to="Realizar triagem do processo - SOF" name="Realizar triagem do processo - SOF"/>
+        <event type="node-leave">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(60043).lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Realizar triagem do processo - SOF">
+        <task name="Realizar triagem do processo - SOF" swimlane="Secretaria de Orçamento" priority="3">
+            <controller>
+                <variable name="movimento_lote" mapped-name="movimentarLote:movimento_lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento SOF" name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - SOF" name="Elaborar documento"/>
+        <transition to="Elaborar Documento - UOPOR" name="Remeter à Unidade Planejamento e Orçamento"/>
+        <transition to="Elaborar Documento - UOFIC" name="Remeter à Unidade Contabilidade e Finanças"/>
+        <transition to="Elaborar Documento - UODEC" name="Remeter à Unidade Orçamento de Despesas Obrigatórias e Custos"/>
+        <transition to="Término" name="Remeter Processo à Unidade Solicitante"/>
+    </task-node>
+    <task-node end-tasks="true" name="Analisar Processo - SOF">
+        <task name="Analisar Processo - SOF" swimlane="Secretaria de Orçamento" priority="3">
+            <controller>
+                <variable name="movimento_lote" mapped-name="movimentarLote:movimento_lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento SOF" name="Testar encaminhar a SJD">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - SOF" name="Elaborar documento"/>
+        <transition to="Elaborar Documento - UOPOR" name="Remeter à Unidade Planejamento e Orçamento"/>
+        <transition to="Elaborar Documento - UOFIC" name="Remeter à Unidade Contabilidade e Finanças"/>
+        <transition to="Elaborar Documento - UODEC" name="Remeter à Unidade Orçamento de Despesas Obrigatórias e Custos"/>
+        <transition to="lançar movimentação de conclusão" name="Remeter ao Gabinete do Relator">
+            <condition expression="#{(tramitacaoProcessualService.recuperaVariavel('pje:fluxo:existeFluxoGabinete') == false) || (tramitacaoProcessualService.recuperaVariavel('pje:fluxo:existeFluxoGabinete') == null)}"/>
+        </transition>
+        <transition to="Término" name="Remeter Processo à Unidade Solicitante"/>
+        <transition to="Encaminhar DG" name="Remeter à Diretor Geral"/>
+        <transition to="Gravar variável remeter a SJD" name="Remeter à SJD">
+            <condition expression="#{(tramitacaoProcessualService.recuperaVariavel('pje:fluxo:existeFluxoGabinete') == false) || (tramitacaoProcessualService.recuperaVariavel('pje:fluxo:existeFluxoGabinete') == null)}"/>
+        </transition>
+        <transition to="Encaminhar a SGP" name="Remeter à SGP"/>
+        <transition to="Encaminhar a SAD" name="Remeter à SAD"/>
+    </task-node>
+    <node name="Gravar variável remeter a SJD">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:encaminharSJD',true)}"/>
+        </event>
+    </node>
+    <node name="lançar movimentação de conclusão">
+        <transition to="Remeter ao Gabinete" name="Remeter ao Gabinete"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(51).comComplementoDeCodigo(3).doTipoDominio().preencherComElementoDeCodigo(6).lancarMovimento()}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:cargoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:orgaoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:colegiadoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:substituicao:substituindo')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:orgaoPresidente')}"/>
+        </event>
+    </node>
+    <process-state name="Remeter ao Gabinete">
+        <sub-process name="Fluxo - Gabinetes" binding="late"/>
+        <transition to="Término" name="Término"/>
+    </process-state>
+    <process-state name="Encaminhar DG">
+        <sub-process name="Fluxo - Elaboração de documento DG" binding="late"/>
+        <transition to="Testar encaminhar a SJD" name="Testar encaminhar a SJD"/>
+    </process-state>
+    <process-state name="Encaminhar a SGP">
+        <sub-process name="Fluxo - Elaboração de documento SGP" binding="late"/>
+        <transition to="Testar encaminhar a SJD" name="Testar encaminhar a SJD"/>
+    </process-state>
+    <process-state name="Encaminhar a SAD">
+        <sub-process name="Fluxo - Elaboração de documento SAD" binding="late"/>
+        <transition to="Testar encaminhar a SJD" name="Testar encaminhar a SJD"/>
+    </process-state>
+    <task-node end-tasks="true" name="Elaborar Documento - SOF">
+        <task name="Elaborar Documento - SOF" swimlane="Secretaria de Orçamento" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+                <variable name="assina_lote" mapped-name="assinarLote:assina_lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento SOF" name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Realizar triagem do processo - SOF" name="Retornar triagem do processo"/>
+        <transition to="Lançar movimento de juntada SOF" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote('112,103,211')}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar triagem do processo')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','112,103,211,119')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de juntada SOF">
+        <transition to="Analisar Processo - SOF" name="Analisar Processo - SOF"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).preencherComTexto('Outros Documentos').lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Elaborar Documento - UOPOR">
+        <task name="Elaborar Documento - UOPOR" swimlane="Unidade de Planejamento e Orçamentário" priority="3">
+            <controller>
+                <variable name="assina_lote" mapped-name="assinarLote:assina_lote" access="read,write"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento SOF" name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Realizar triagem do processo - SOF" name="Retornar à SOF"/>
+        <transition to="Lançar movimento de juntada UOPOR" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote('112,103,211,119')}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar à SOF')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','112,103,211,119')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de juntada UOPOR">
+        <transition to="Analisar Processo - UOPOR" name="Analisar Processo - UOPOR"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).preencherComTexto('Outros Documentos').lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Analisar Processo - UOPOR">
+        <task name="Analisar Processo - UOPOR" swimlane="Unidade de Planejamento e Orçamentário" priority="3">
+            <controller>
+                <variable name="movimento_lote" mapped-name="movimentarLote:movimento_lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento SOF" name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - UOPOR" name="Elaborar Documento"/>
+        <transition to="Elaborar Documento - UOFIC" name="Remeter à Unidade Contabilidade e Finanças"/>
+        <transition to="Elaborar Documento - UODEC" name="Remeter à Unidade Orçamento de Despesas Obrigatórias e Custos"/>
+        <transition to="Analisar Processo - SOF" name="Remeter à SOF"/>
+    </task-node>
+    <task-node end-tasks="true" name="Elaborar Documento - UOFIC">
+        <task name="Elaborar Documento - UOFIC" swimlane="Unidade de Finanças e Contabilidade" priority="3">
+            <controller>
+                <variable name="assina_lote" mapped-name="assinarLote:assina_lote" access="read,write"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento SOF" name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Realizar triagem do processo - SOF" name="Retornar à SOF"/>
+        <transition to="Lançar movimento de juntada UOFIC" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote('112,103,211,119')}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar à SOF')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','112,103,211,119')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de juntada UOFIC">
+        <transition to="Analisar Processo - UOFIC" name="Analisar Processo - UOFIC"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).preencherComTexto('Outros Documentos').lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Analisar Processo - UOFIC">
+        <task name="Analisar Processo - UOFIC" swimlane="Unidade de Finanças e Contabilidade" priority="3">
+            <controller>
+                <variable name="movimento_lote" mapped-name="movimentarLote:movimento_lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento SOF" name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - UOFIC" name="Elaborar Documento"/>
+        <transition to="Elaborar Documento - UOPOR" name="Remeter à Unidade Planejamento e Orçamento"/>
+        <transition to="Elaborar Documento - UODEC" name="Remeter à Unidade Orçamento de Despesas Obrigatórias e Custos"/>
+        <transition to="Analisar Processo - SOF" name="Remeter à SOF"/>
+    </task-node>
+    <task-node end-tasks="true" name="Elaborar Documento - UODEC">
+        <task name="Elaborar Documento - UODEC" swimlane="Unidade de Orçamento de Despesas Obrigatórias e Custos" priority="3">
+            <controller>
+                <variable name="assina_lote" mapped-name="assinarLote:assina_lote" access="read,write"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento SOF" name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Realizar triagem do processo - SOF" name="Retornar à SOF"/>
+        <transition to="Lançar movimento de juntada UODEC" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote('112,103,211,119')}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar à SOF')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','112,103,211,119')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de juntada UODEC">
+        <transition to="Analisar Processo - UODEC" name="Analisar Processo - UODEC"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).preencherComTexto('Outros Documentos').lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Analisar Processo - UODEC">
+        <task name="Analisar Processo - UODEC" swimlane="Unidade de Orçamento de Despesas Obrigatórias e Custos" priority="3">
+            <controller>
+                <variable name="movimento_lote" mapped-name="movimentarLote:movimento_lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento SOF" name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - UODEC" name="Elaborar Documento"/>
+        <transition to="Elaborar Documento - UOPOR" name="Remeter à Unidade Planejamento e Orçamento"/>
+        <transition to="Elaborar Documento - UOFIC" name="Remeter à Unidade Contabilidade e Finanças"/>
+        <transition to="Analisar Processo - SOF" name="Remeter à SOF"/>
+    </task-node>
+    <node name="Gravar variável cancelamento fluxo">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:elaborarDocumentoSOF:cancelada',true)}"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Elaboração de documento SOF">
+        <task name="Nó de Desvio - Fluxo - Elaboração de documento SOF" swimlane="Nó de Desvio - Fluxo - Elaboração de documento SOF" priority="3"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Realizar triagem do processo - SOF" name="Realizar triagem do processo - SOF"/>
+        <transition to="Elaborar Documento - UOPOR" name="Elaborar Documento - UOPOR"/>
+        <transition to="Elaborar Documento - SOF" name="Elaborar Documento - SOF"/>
+        <transition to="Analisar Processo - SOF" name="Analisar Processo - SOF"/>
+        <transition to="Analisar Processo - UOPOR" name="Analisar Processo - UOPOR"/>
+        <transition to="Elaborar Documento - UOFIC" name="Elaborar Documento - UOFIC"/>
+        <transition to="Analisar Processo - UOFIC" name="Analisar Processo - UOFIC"/>
+        <transition to="Elaborar Documento - UODEC" name="Elaborar Documento - UODEC"/>
+        <transition to="Analisar Processo - UODEC" name="Analisar Processo - UODEC"/>
+        <transition to="Taf1" name="Taf1"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

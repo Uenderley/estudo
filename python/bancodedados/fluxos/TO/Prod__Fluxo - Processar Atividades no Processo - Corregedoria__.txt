@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Processar Atividades no Processo - Corregedoria">
+    <description><![CDATA[Versão 08 2017.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1,84:1003')}"/>
+    </swimlane>
+    <swimlane name="Coordenadoria de Autuação e Distribuição">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1338,60:5483,153:5948,153:5950,153:5483,153:1118,60:1118')}"/>
+    </swimlane>
+    <swimlane name="Corregedoria - Unidade Judicial">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23660:5849,23660:5197,23660:5948,23660:5950')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition to="manipular variaveis fluxo" name="manipular variaveis fluxo"/>
+    </start-state>  
+    <!-- NODES -->
+    <node name="manipular variaveis fluxo">
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:encaminharSJD')}"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:encaminharArquivo')}"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:encaminharGabCorregedor')}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Analisar Processo - Corregedoria">
+        <task name="Analisar Processo - Corregedoria" swimlane="Corregedoria - Unidade Judicial" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_visualizarDecisao" mapped-name="frame:Processo_Fluxo_visualizarDecisao" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Registrar arquivamento provisório - Corregedoria" name="Registrar arquivamento provisório - Corregedoria"/>
+        <transition to="Desentranhar documentos - Corregedoria" name="Desentranhar documentos - Corregedoria"/>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Atos de Comunicação" name="Atos de Comunicação"/>
+        <transition to="Preparar atos de comunicação - expresso" name="Preparar atos de comunicação - expresso"/>
+        <transition to="Apensar e desapensar processos - Corregedoria" name="Apensar e desapensar processos - Corregedoria"/>
+        <transition to="Elaborar Documentos - Corregedoria" name="Elaborar Documentos - Corregedoria"/>
+        <transition to="Registrar sobrestamento ou suspensão - Corregedoria" name="Registrar sobrestamento ou suspensão - Corregedoria"/>
+        <transition to="Desmembrar processos - Corregedoria" name="Desmembrar processos - Corregedoria">
+            <condition expression="#{fluxoManager.existeProcessoNoFluxoEmExecucao(tramitacaoProcessualService.recuperaProcesso().getIdProcessoTrf(),'Fluxo - Registrar informações SGP') == true}"/>
+        </transition>
+        <transition to="Verificar controle de prazos" name="Verificar controle de prazos"/>
+        <transition to="Verificar expedientes abertos" name="Registrar ciência de intimação pessoal"/>
+        <transition to="Retirar pedido de liminar" name="Retirar pedido de urgência"/>
+        <transition to="Colocar pedido de urgência" name="Colocar pedido de urgência"/>
+        <transition to="Fechar expediente manualmente - Corregedoria" name="Fechar expediente manualmente - Corregedoria"/>
+        <transition to="Inserir Informação de AR" name="Verificar informação de AR"/>
+        <transition to="Registrar trânsito em Julgado" name="Registrar trânsito em Julgado"/>
+        <transition to="Remeter ao gabinete Corregedoria" name="Remeter ao gabinete Corregedoria"/>
+        <transition to="Remeter à Judiciária" name="Remeter à Judiciária"/>
+        <transition to="Atualizar dados do Processo - Corregedoria" name="Remeter à Judiciária - Retificar autuação"/>
+        <transition to="Remeter para arquivamento" name="Remeter para arquivamento"/>
+        <transition to="Remeter processo Cadastro Fiscalização" name="Remeter processo Cadastro Fiscalização"/>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Verificar controle de prazos')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:controlaPrazoPublicacaoEmSessao',true)}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:controlaPrazoPublicacaoEmSessao')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Atualizar dados do Processo - Corregedoria">
+        <task name="Atualizar dados do Processo - Corregedoria" swimlane="Coordenadoria de Autuação e Distribuição" priority="4">
+            <controller>
+                <variable name="Processo_RetificacaoAutuacao_updateRetificacaoAutuacao" mapped-name="page:Processo_RetificacaoAutuacao_updateRetificacaoAutuacao" access="read,write"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <description><![CDATA[dados]]></description>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="manipular variaveis fluxo" name="Devolver processo"/>
+        <transition to="manipular variaveis fluxo" name="Analisar determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Analisar determinação')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','57')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pageParam','idProcesso='.concat(tramitacaoProcessualService.recuperaProcesso().idProcessoTrf))}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{editorTextoService.escopoDoDocumentoNaTarefa()}"/>
+        </event>
+    </task-node>
+    <process-state name="Inserir Informação de AR">
+        <sub-process name="Fluxo - Controle de ARs - Corregedoria" binding="late"/>
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+    </process-state>
+    <task-node end-tasks="true" name="Fechar expediente manualmente - Corregedoria">
+        <task name="Fechar expediente manualmente - Corregedoria" swimlane="Corregedoria - Unidade Judicial" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_exped_encerrarExpedienteManual" mapped-name="frame:WEB-INF_xhtml_flx_exped_encerrarExpedienteManual" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+    </task-node>
+    <node name="Retirar pedido de liminar">
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+        <event type="node-leave">
+            <action name="upd" expression="#{processoTrfHome.update()}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.recuperaProcesso().setApreciadoTutelaLiminar('true')}"/>
+        </event>
+    </node>
+    <node name="Colocar pedido de urgência">
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+        <event type="node-leave">
+            <action name="upd" expression="#{processoTrfHome.update()}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.recuperaProcesso().setApreciadoTutelaLiminar('false')}"/>
+        </event>
+    </node>
+    <decision expression="#{comunicacaoProcessualAction.getExpedientesTelefone().size() &gt; 0 or        comunicacaoProcessualAction.getExpedientesPessoal().size() &gt; 0 ? 'T2' : 'T1'}" name="Verificar expedientes abertos">
+        <transition to="Analisar Processo - Corregedoria" name="T1"/>
+        <transition to="Registrar ciência intimação pessoal - Corregedoria" name="T2"/>
+    </decision>
+    <task-node end-tasks="true" name="Registrar ciência intimação pessoal - Corregedoria">
+        <task name="Registrar ciência intimação pessoal - Corregedoria" swimlane="Corregedoria - Unidade Judicial" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_exped_registroCiencia" mapped-name="frame:WEB-INF_xhtml_flx_exped_registroCiencia" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - Corregedoria" name="Retornar para analisar processo"/>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setVariable('pje:fluxo:registrociencia:meios','S,T,N')}"/>
+        </event>
+    </task-node>
+    <process-state name="Verificar controle de prazos">
+        <sub-process name="Fluxo - Controle de prazos - Corregedoria" binding="late"/>
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+    </process-state>
+    <task-node end-tasks="true" name="Registrar arquivamento provisório - Corregedoria">
+        <task name="Registrar arquivamento provisório - Corregedoria" swimlane="Corregedoria - Unidade Judicial" priority="3"/>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Desarquivar Processo" name="Desarquivar Processo"/>
+        <transition to="Analisar Processo - Corregedoria" name="Retornar ao Analisar Processo"/>
+        <event type="task-start">
+            <action name="Condicao do lancamento temporario de movimentos" expression="#{lancadorMovimentosService.setCondicaoLancamentoMovimentosTemporarioNoFluxo('#{false}')}"/>
+        </event>
+    </task-node>
+    <node name="Desarquivar Processo">
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(893).lancarMovimento()}"/>
+        </event>
+    </node>
+    <process-state name="Atos de Comunicação">
+        <sub-process name="Fluxo - Ato de Comunicação - Corregedoria" binding="late"/>
+        <description><![CDATA[]]></description>
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+    </process-state>
+    <task-node end-tasks="true" name="Preparar atos de comunicação - expresso">
+        <task name="Preparar atos de comunicação - expresso" swimlane="Corregedoria - Unidade Judicial" priority="3">
+            <controller>
+                <variable name="MiniPac" mapped-name="miniPAC:MiniPac" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - Corregedoria" name="Cancelar"/>
+        <transition to="Analisar Processo - Corregedoria" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('prepararAto:meiosComunicacoes','E,M,P,T,E,S')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:miniPac:DocJaExiste',true)}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{miniPacService.apagarVariaveisMiniPacContexto()}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Apensar e desapensar processos - Corregedoria">
+        <task name="Apensar e desapensar processos - Corregedoria" swimlane="Corregedoria - Unidade Judicial" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_associarProcessos" mapped-name="frame:Processo_Fluxo_associarProcessos" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+        <event type="task-start">
+            <action name="Condicao do lancamento temporario de movimentos" expression="#{lancadorMovimentosService.setCondicaoLancamentoMovimentosTemporarioNoFluxo('#{false}')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Desentranhar documentos - Corregedoria">
+        <task name="Desentranhar documentos - Corregedoria" swimlane="Corregedoria - Unidade Judicial" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - Corregedoria" name="Retornar ao Analisar Processo"/>
+        <event type="task-start">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','57')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('ANALISAR determinação')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',103)}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Desmembrar processos - Corregedoria">
+        <task name="Desmembrar processos - Corregedoria" swimlane="Corregedoria - Unidade Judicial" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_abaDesmembrar" mapped-name="page:Processo_Fluxo_abaDesmembrar" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+    </task-node>
+    <task-node end-tasks="true" name="Registrar sobrestamento ou suspensão - Corregedoria">
+        <task name="Registrar sobrestamento ou suspensão - Corregedoria" swimlane="Corregedoria - Unidade Judicial" priority="3"/>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Reativar processo suspenso ou sobrestado" name="Reativar processo suspenso ou sobrestado"/>
+        <event type="task-start">
+            <action name="Condicao do lancamento temporario de movimentos" expression="#{lancadorMovimentosService.setCondicaoLancamentoMovimentosTemporarioNoFluxo('#{false}')}"/>
+        </event>
+    </task-node>
+    <node name="Reativar processo suspenso ou sobrestado">
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(849).lancarMovimento()}"/>
+        </event>
+    </node>
+    <node name="Remeter ao gabinete Corregedoria">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:encaminharGabCorregedor',true)}"/>
+        </event>
+    </node>
+    <node name="Remeter à Judiciária">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:encaminharSJD',true)}"/>
+        </event>
+    </node>
+    <node name="Remeter para arquivamento">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:encaminharArquivo',true)}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Registrar trânsito em Julgado">
+        <task name="Registrar trânsito em Julgado" swimlane="Corregedoria - Unidade Judicial" priority="3">
+            <controller>
+                <variable name="DtTransito" mapped-name="datePast:DtTransito" access="read,write,required"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <description><![CDATA[]]></description>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Lançar movimentação de transito" name="Lançar movimentação de transito"/>
+        <transition to="Analisar Processo - Corregedoria" name="Cancelar"/>
+        <event type="task-end">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('tse:dtTransito',org.jboss.seam.bpm.taskInstance.getVariable('datePast:DtTransito'))}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('tiposDisponiveisIds','70')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Efetuar trânsito julgado')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',101)}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Cancelar')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimentação de transito">
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('tse:dtTransito')}"/>
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(848).comComplementoDeNome('data').preencherComTexto(dateUtil.dateToString(tramitacaoProcessualService.recuperaVariavel('tse:dtTransito'))).lancarMovimento()}"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <node name="Remeter processo Cadastro Fiscalização">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action expression="#{processoJudicialService.incluirNovoFluxo(tramitacaoProcessualService.recuperaProcesso(),'FLX_PRINCIPAL_CORREGEDORIA',processInstance.contextInstance.variables)}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+        <task name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" swimlane="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" priority="3"/>
+        <transition to="Analisar Processo - Corregedoria" name="Analisar Processo - Corregedoria"/>
+        <transition to="Desentranhar documentos - Corregedoria" name="Desentranhar documentos - Corregedoria"/>
+        <transition to="Apensar e desapensar processos - Corregedoria" name="APENSA e DESAPENSAR processos"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Registrar arquivamento provisório - Corregedoria" name="Registrar arquivamento provisório - Corregedoria"/>
+        <transition to="Elaborar Documentos - Corregedoria" name="Elaborar Documentos - Corregedoria"/>
+        <transition to="Registrar sobrestamento ou suspensão - Corregedoria" name="Registrar sobrestamento ou suspensão - Corregedoria"/>
+        <transition to="Desmembrar processos - Corregedoria" name="Desmembrar processos - Corregedoria"/>
+        <transition to="Registrar ciência intimação pessoal - Corregedoria" name="Registrar ciência intimação pessoal - Corregedoria"/>
+        <transition to="Fechar expediente manualmente - Corregedoria" name="Fechar expediente manualmente - Corregedoria"/>
+        <transition to="Registrar trânsito em Julgado" name="Registrar trânsito em Julgado"/>
+        <transition to="Atualizar dados do Processo - Corregedoria" name="Atualizar dados do Processo - Corregedoria"/>
+        <transition to="Preparar atos de comunicação - expresso" name="Preparar atos de comunicação - expresso"/>
+    </task-node>
+    <task-node end-tasks="true" name="Elaborar Documentos - Corregedoria">
+        <task name="Elaborar Documentos - Corregedoria" swimlane="Corregedoria - Unidade Judicial" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - Corregedoria" name="Retornar ao Analisar Processo"/>
+        <transition to="Lançamento de movimentação corr" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','57,109,110,60,123')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,104,105,106,113,121,131,132,136,114,142,143,144)}"/>
+            <action name="upd" expression="#{editorTextoService.escopoDoDocumentoNaTarefa()}"/>
+        </event>
+    </task-node>
+    <node name="Lançamento de movimentação corr">
+        <transition to="manipular variaveis fluxo" name="manipular variaveis fluxo"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).doTipoLivre().preencherComTexto(processoDocumentoManager.getUltimoProcessoDocumento(tipoProcessoDocumentoManager.consultarTodosDisponiveis(),tramitacaoProcessualService.recuperaProcesso().processo).getTipoProcessoDocumento().getTipoProcessoDocumento()).associarAoDocumento(processoDocumentoManager.getUltimoProcessoDocumento(tipoProcessoDocumentoManager.consultarTodosDisponiveis(),tramitacaoProcessualService.recuperaProcesso().processo)).lancarMovimento()}"/>
+        </event>
+    </node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

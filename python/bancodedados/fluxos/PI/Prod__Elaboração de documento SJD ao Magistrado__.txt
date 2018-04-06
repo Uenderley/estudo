@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="iso-8859-1"?><process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Elaboração de documento SJD ao Magistrado">
+    <description><![CDATA[Versão 08 2017]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Magistrado">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('4:5849,4:5197,3:1469,46:1469')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Elaboração de documento SJD ao Magistrado">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1338,84:1')}"/>
+    </swimlane>
+    <swimlane name="Unidade de Processamento">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1338,154:5948,154:5950,154:5483')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3" swimlane="Unidade de Processamento"/>
+        <transition name="Apagar variáveis de fluxo" to="Apagar variáveis de fluxo"/>
+    </start-state>  
+    <!-- NODES -->
+    <node name="Apagar variáveis de fluxo">
+        <transition name="Elaborar documentos - Magistrado Assinar" to="Elaborar documentos - Magistrado Assinar"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Elaborar documentos - Magistrado Assinar">
+        <task name="Elaborar documentos - Magistrado Assinar" priority="4" swimlane="Unidade de Processamento">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_editorTexto" name="Processo_Fluxo_editorTexto"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Elaboração de documento SJD ao Magistrado" to="Nó de Desvio - Fluxo - Elaboração de documento SJD ao Magistrado">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Remeter ao Relator para assinatura" to="Assinar Documentos"/>
+        <transition name="Desbloquear Editor - Elaborar Documentos" to="Desbloquear Editor - Elaborar Documentos"/>
+        <transition name="Finalizar fluxo" to="Término"/>
+        <transition name="Prosseguir" to="Lançamento de Movimentos">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action expression="#{atividadesLoteService.setTipoDocumentoAssinarLote(&quot;34,57,109,110,60,123,112,119&quot;)}" name="upd"/>
+            <action expression="#{taskInstanceUtil.setVariable('mostrarBotaoGravarNoFluxo','false')}" name="upd"/>
+        </event>
+        <event type="task-create">
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','34,57,109,110,60,123,112,119')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Finalizar fluxo')}" name="upd"/>
+        </event>
+        <event type="node-leave">
+            <action expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}" name="upd"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,104,105,106,113,121,131,132,136,114,142,143,144)}" name="upd"/>
+            <action expression="#{editorTextoService.escopoDoDocumentoNaTarefa()}" name="upd"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Assinar Documentos">
+        <task name="Assinar Documentos" priority="4" swimlane="Magistrado">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_editorTexto" name="Processo_Fluxo_editorTexto"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Elaboração de documento SJD ao Magistrado" to="Nó de Desvio - Fluxo - Elaboração de documento SJD ao Magistrado">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Prosseguir" to="Lançamento de Movimentos">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Devolver a minuta" to="Elaborar documentos - Magistrado Assinar"/>
+        <event type="task-start">
+            <action expression="#{atividadesLoteService.setTipoDocumentoAssinarLote(&quot;34,57,109,110,60,123,112,119&quot;)}" name="upd"/>
+            <action expression="#{taskInstanceUtil.setVariable('mostrarBotaoGravarNoFluxo','false')}" name="upd"/>
+        </event>
+        <event type="task-create">
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','34,57,109,110,60,123,112,119')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Finalizar fluxo')}" name="upd"/>
+        </event>
+        <event type="node-leave">
+            <action expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}" name="upd"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,104,105,106,113,121,131,132,136,114,142,143,144)}" name="upd"/>
+            <action expression="#{editorTextoService.escopoDoDocumentoNaTarefa()}" name="upd"/>
+        </event>
+    </task-node>
+    <node name="Lançamento de Movimentos">
+        <transition name="Término" to="Término"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).doTipoLivre().preencherComTexto(processoDocumentoManager.getUltimoProcessoDocumento(tipoProcessoDocumentoManager.consultarTodosDisponiveis(),tramitacaoProcessualService.recuperaProcesso().processo).getTipoProcessoDocumento().getTipoProcessoDocumento()).associarAoDocumento(processoDocumentoManager.getUltimoProcessoDocumento(tipoProcessoDocumentoManager.consultarTodosDisponiveis(),tramitacaoProcessualService.recuperaProcesso().processo)).lancarMovimento()}"/>
+        </event>
+    </node>
+    <node name="Desbloquear Editor - Elaborar Documentos">
+        <transition name="Elaborar documentos - Magistrado Assinar" to="Elaborar documentos - Magistrado Assinar"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Elaboração de documento SJD ao Magistrado">
+        <task name="Nó de Desvio - Fluxo - Elaboração de documento SJD ao Magistrado" priority="3" swimlane="Nó de Desvio - Fluxo - Elaboração de documento SJD ao Magistrado"/>
+        <transition name="Término" to="Término"/>
+        <transition name="Assinar Documentos" to="Assinar Documentos"/>
+        <transition name="Elaborar documentos - Magistrado Assinar" to="Elaborar documentos - Magistrado Assinar"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

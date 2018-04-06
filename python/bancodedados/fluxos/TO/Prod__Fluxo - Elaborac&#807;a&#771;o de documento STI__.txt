@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Elaboração de documento STI">
+    <description><![CDATA[Versão 08 2017.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Unidade de Infraestrutura">
+        <assignment pooled-actors="#"/>
+    </swimlane>
+    <swimlane name="Secretaria de Tecnologia da Informação">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23810:5849,23810:5197,23810:5990')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1338,3:1469')}"/>
+    </swimlane>
+    <swimlane name="Unidade de Sistemas Eleitorais">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23812:5948,23812:5950,23812:5483')}"/>
+    </swimlane>
+    <swimlane name="Unidade de Sistemas Corporativos">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23811:5948,23811:5950,23811:5483')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Elaboração de documento STI">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition to="Apagar variável de fluxo" name="Apagar variável de fluxo"/>
+    </start-state>  
+    <!-- NODES -->
+    <node name="Apagar variável de fluxo">
+        <transition to="Testar encaminhar a SJD" name="Testar encaminhar a SJD"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:elaborarDocumentoSTI:cancelada')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:elaborarDocumentoSTI:ciencia')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+        </event>
+    </node>
+    <decision expression="#{tramitacaoProcessualService.recuperaVariavel('pje:fluxo:encaminharSJD') ? 'T1' : 'T2'}" name="Testar encaminhar a SJD">
+        <transition to="Término" name="T1"/>
+        <transition to="Lançar movimento recebido" name="T2"/>
+    </decision>
+    <node name="Lançar movimento recebido">
+        <transition to="Realizar triagem do processo - STI" name="Realizar triagem do processo - STI"/>
+        <event type="node-leave">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(60055).lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Realizar triagem do processo - STI">
+        <task name="Realizar triagem do processo - STI" priority="3">
+            <controller>
+                <variable name="movimento_lote" mapped-name="movimentarLote:movimento_lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento STI" name="Nó de Desvio - Fluxo - Elaboração de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - STI" name="Elaborar documento"/>
+        <transition to="Elaborar Documento - Sistemas Eleitorais" name="Remeter à Unidade de Sistemas Eleitorais"/>
+        <transition to="Elaborar Documento - Sistemas Corporativos" name="Remeter à Unidade de Sistemas Corporativos"/>
+        <transition to="Elaborar Documento - Infraestrutura" name="Remeter à Unidade de Infraestrutura"/>
+        <transition to="Término" name="Remeter Processo à Unidade Solicitante"/>
+        <transition to="Nó de Desvio - Fluxo - Elaboracao de documento STI" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>
+    <task-node end-tasks="true" name="Analisar Processo - STI">
+        <task name="Analisar Processo - STI" priority="3">
+            <controller>
+                <variable name="movimento_lote" mapped-name="movimentarLote:movimento_lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento STI" name="Testar encaminhar a SJD">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - STI" name="Elaborar documento"/>
+        <transition to="Elaborar Documento - Sistemas Eleitorais" name="Remeter à Unidade de Sistemas Eleitorais"/>
+        <transition to="Elaborar Documento - Sistemas Corporativos" name="Remeter à Unidade de Sistemas Corporativos"/>
+        <transition to="Elaborar Documento - Infraestrutura" name="Remeter à Unidade de Infraestrutura"/>
+        <transition to="lançar movimentação de conclusão" name="Remeter ao Gabinete do Relator">
+            <condition expression="#{(tramitacaoProcessualService.recuperaVariavel('pje:fluxo:existeFluxoGabinete') == false) || (tramitacaoProcessualService.recuperaVariavel('pje:fluxo:existeFluxoGabinete') == null)}"/>
+        </transition>
+        <transition to="Término" name="Remeter Processo à Unidade Solicitante"/>
+        <transition to="Encaminhar DG" name="Remeter à Diretor Geral"/>
+        <transition to="Gravar variável remeter a SJD" name="Remeter à SJD">
+            <condition expression="#{(tramitacaoProcessualService.recuperaVariavel('pje:fluxo:existeFluxoGabinete') == false) || (tramitacaoProcessualService.recuperaVariavel('pje:fluxo:existeFluxoGabinete') == null)}"/>
+        </transition>
+        <transition to="Encaminhar a SGP" name="Remeter à SGP"/>
+        <transition to="Encaminhar a SAD" name="Remeter à SAD"/>
+        <transition to="Nó de Desvio - Fluxo - Elaboracao de documento STI" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>
+    <node name="Gravar variável remeter a SJD">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:encaminharSJD',true)}"/>
+        </event>
+    </node>
+    <node name="lançar movimentação de conclusão">
+        <transition to="Remeter ao Gabinete" name="Remeter ao Gabinete"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(51).comComplementoDeCodigo(3).doTipoDominio().preencherComElementoDeCodigo(6).lancarMovimento()}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:cargoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:orgaoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:deslocamento:colegiadoDestino')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:substituicao:substituindo')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:orgaoPresidente')}"/>
+        </event>
+    </node>
+    <process-state name="Remeter ao Gabinete">
+        <sub-process name="Fluxo - Gabinetes" binding="late"/>
+        <transition to="Término" name="Término"/>
+    </process-state>
+    <process-state name="Encaminhar DG">
+        <sub-process name="Fluxo - Elaboração de documento DG" binding="late"/>
+        <transition to="Testar encaminhar a SJD" name="Testar encaminhar a SJD"/>
+    </process-state>
+    <process-state name="Encaminhar a SGP">
+        <sub-process name="Fluxo - Elaboração de documento SGP" binding="late"/>
+        <transition to="Testar encaminhar a SJD" name="Testar encaminhar a SJD"/>
+    </process-state>
+    <process-state name="Encaminhar a SAD">
+        <sub-process name="Fluxo - Elaboração de documento SAD" binding="late"/>
+        <transition to="Testar encaminhar a SJD" name="Testar encaminhar a SJD"/>
+    </process-state>
+    <task-node end-tasks="true" name="Elaborar Documento - STI">
+        <task name="Elaborar Documento - STI" priority="4">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+                <variable name="assina_lote" mapped-name="assinarLote:assina_lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento STI" name="Nó de Desvio - Fluxo - Elaboração de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Realizar triagem do processo - STI" name="Retornar triagem do processo"/>
+        <transition to="Lançar movimento de juntada STI" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Nó de Desvio - Fluxo - Elaboracao de documento STI" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote('112,103,211')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:paj:cancelada',false)}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar triagem do processo')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','112,103,211,119')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de juntada STI">
+        <transition to="Analisar Processo - STI" name="Analisar Processo - STI"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).preencherComTexto('Outros Documentos').lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Elaborar Documento - Sistemas Eleitorais">
+        <task name="Elaborar Documento - Sistemas Eleitorais" swimlane="Unidade de Sistemas Eleitorais" priority="3">
+            <controller>
+                <variable name="assina_lote" mapped-name="assinarLote:assina_lote" access="read,write"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento STI" name="Nó de Desvio - Fluxo - Elaboração de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Realizar triagem do processo - STI" name="Retornar à STI"/>
+        <transition to="Lançar movimento de juntada Sistemas Eleitorais" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Nó de Desvio - Fluxo - Elaboracao de documento STI" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote('112,103,211,119')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:paj:cancelada',false)}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar à STI')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','112,103,211,119')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de juntada Sistemas Eleitorais">
+        <transition to="Analisar Processo - Sistemas Eleitorais" name="Analisar Processo - Sistemas Eleitorais"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).preencherComTexto('Outros Documentos').lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Analisar Processo - Sistemas Eleitorais">
+        <task name="Analisar Processo - Sistemas Eleitorais" swimlane="Unidade de Sistemas Eleitorais" priority="3">
+            <controller>
+                <variable name="movimento_lote" mapped-name="movimentarLote:movimento_lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento STI" name="Nó de Desvio - Fluxo - Elaboração de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - Sistemas Eleitorais" name="Elaborar Documento"/>
+        <transition to="Elaborar Documento - Sistemas Corporativos" name="Remeter à Unidade de Sistemas Corporativos"/>
+        <transition to="Elaborar Documento - Infraestrutura" name="Remeter à Unidade de Infraestrutura"/>
+        <transition to="Analisar Processo - STI" name="Remeter à STI"/>
+        <transition to="Nó de Desvio - Fluxo - Elaboracao de documento STI" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>
+    <task-node end-tasks="true" name="Elaborar Documento - Sistemas Corporativos">
+        <task name="Elaborar Documento - Sistemas Corporativos" swimlane="Unidade de Sistemas Corporativos" priority="3">
+            <controller>
+                <variable name="assina_lote" mapped-name="assinarLote:assina_lote" access="read,write"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento STI" name="Nó de Desvio - Fluxo - Elaboração de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Realizar triagem do processo - STI" name="Retornar à STI"/>
+        <transition to="Lançar movimento de juntada Sistemas Corporativos" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Nó de Desvio - Fluxo - Elaboracao de documento STI" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote('112,103,211,119')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:paj:cancelada',false)}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar à STI')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','112,103,211,119')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de juntada Sistemas Corporativos">
+        <transition to="Analisar Processo - Sistemas Corporativos" name="Analisar Processo - Sistemas Corporativos"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).preencherComTexto('Outros Documentos').lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Analisar Processo - Sistemas Corporativos">
+        <task name="Analisar Processo - Sistemas Corporativos" swimlane="Unidade de Sistemas Corporativos" priority="3">
+            <controller>
+                <variable name="movimento_lote" mapped-name="movimentarLote:movimento_lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento STI" name="Nó de Desvio - Fluxo - Elaboração de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - Sistemas Corporativos" name="Elaborar Documento"/>
+        <transition to="Elaborar Documento - Sistemas Eleitorais" name="Remeter à Unidade de Sistemas Eleitorais"/>
+        <transition to="Elaborar Documento - Infraestrutura" name="Remeter à Unidade de Infraestrutura"/>
+        <transition to="Analisar Processo - STI" name="Remeter à STI"/>
+        <transition to="Nó de Desvio - Fluxo - Elaboracao de documento STI" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>
+    <task-node end-tasks="true" name="Elaborar Documento - Infraestrutura">
+        <task name="Elaborar Documento - Infraestrutura" swimlane="Unidade de Infraestrutura" priority="3">
+            <controller>
+                <variable name="assina_lote" mapped-name="assinarLote:assina_lote" access="read,write"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento STI" name="Nó de Desvio - Fluxo - Elaboração de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Realizar triagem do processo - STI" name="Retornar à STI"/>
+        <transition to="Lançar movimento de juntada Infraestrutura" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Nó de Desvio - Fluxo - Elaboracao de documento STI" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote('112,103,211,119')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:paj:cancelada',false)}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar à STI')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','112,103,211,119')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de juntada Infraestrutura">
+        <transition to="Analisar Processo - Infraestrutura" name="Analisar Processo - Infraestrutura"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).preencherComTexto('Outros Documentos').lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Analisar Processo - Infraestrutura">
+        <task name="Analisar Processo - Infraestrutura" swimlane="Unidade de Infraestrutura" priority="3">
+            <controller>
+                <variable name="movimento_lote" mapped-name="movimentarLote:movimento_lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento STI" name="Nó de Desvio - Fluxo - Elaboração de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documento - Infraestrutura" name="Elaborar Documento"/>
+        <transition to="Elaborar Documento - Sistemas Eleitorais" name="Remeter à Unidade de Sistemas Eleitorais"/>
+        <transition to="Elaborar Documento - Sistemas Corporativos" name="Remeter à Unidade de Sistemas Corporativos"/>
+        <transition to="Analisar Processo - STI" name="Remeter à STI"/>
+        <transition to="Nó de Desvio - Fluxo - Elaboracao de documento STI" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>
+    <node name="Gravar variável cancelamento fluxo">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:elaborarDocumentoSTI:cancelada',true)}"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Elaboração de documento STI">
+        <task name="Nó de Desvio - Fluxo - Elaboração de documento STI" swimlane="Nó de Desvio - Fluxo - Elaboração de documento STI" priority="3"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Realizar triagem do processo - STI" name="Realizar triagem do processo - STI"/>
+        <transition to="Elaborar Documento - Sistemas Eleitorais" name="Elaborar Documento - Sistemas Eleitorais"/>
+        <transition to="Elaborar Documento - STI" name="Elaborar Documento - STI"/>
+        <transition to="Analisar Processo - STI" name="Analisar Processo - STI"/>
+        <transition to="Analisar Processo - Sistemas Eleitorais" name="Analisar Processo - Sistemas Eleitorais"/>
+        <transition to="Elaborar Documento - Sistemas Corporativos" name="Elaborar Documento - Sistemas Corporativos"/>
+        <transition to="Analisar Processo - Sistemas Corporativos" name="Analisar Processo - Sistemas Corporativos"/>
+        <transition to="Elaborar Documento - Infraestrutura" name="Elaborar Documento - Infraestrutura"/>
+        <transition to="Analisar Processo - Infraestrutura" name="Analisar Processo - Infraestrutura"/>
+        <transition to="Nó de Desvio - Fluxo - Elaboracao de documento STI" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Elaboracao de documento STI">
+        <task name="Nó de Desvio - Fluxo - Elaboracao de documento STI" swimlane="Nó de Desvio - Fluxo - Elaboracao de documento STI" priority="3"/>
+        <transition to="Realizar triagem do processo - STI" name="Realizar triagem do processo - STI"/>
+        <transition to="Analisar Processo - STI" name="Analisar Processo - STI"/>
+        <transition to="Elaborar Documento - STI" name="Elaborar Documento - STI"/>
+        <transition to="Elaborar Documento - Sistemas Eleitorais" name="Elaborar Documento - Sistemas Eleitorais"/>
+        <transition to="Analisar Processo - Sistemas Eleitorais" name="Analisar Processo - Sistemas Eleitorais"/>
+        <transition to="Elaborar Documento - Sistemas Corporativos" name="Elaborar Documento - Sistemas Corporativos"/>
+        <transition to="Analisar Processo - Sistemas Corporativos" name="Analisar Processo - Sistemas Corporativos"/>
+        <transition to="Elaborar Documento - Infraestrutura" name="Elaborar Documento - Infraestrutura"/>
+        <transition to="Analisar Processo - Infraestrutura" name="Analisar Processo - Infraestrutura"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Nó de Desvio - Fluxo - Elaboração de documento STI" name="Nó de Desvio - Fluxo - Elaboração de documento STI"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

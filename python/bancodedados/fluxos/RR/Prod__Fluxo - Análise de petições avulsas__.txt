@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Apreciação colegiada por não relatores">
+    <description><![CDATA[Subfluxo de tramitação de processos relatados por outros julgadores, mas que podem ou devem ser apreciados por outros órgãos.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Magistrado">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('3:1469,4:5849,4:5197')}"/>
+    </swimlane>
+    <swimlane name="Revisores">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('5:5849,5:5197,4:5849')}"/>
+    </swimlane>
+    <swimlane name="Assessoria">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('4:5849,4:5197')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1,84:1003')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" swimlane="Assessoria" priority="3"/>
+        <transition to="Minutar voto antecipadamente - Não Relator" name="Minutar voto antecipadamente - Não Relator"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Minutar voto antecipadamente - Não Relator">
+        <task name="Minutar voto antecipadamente - Não Relator" swimlane="Assessoria" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_votacaoVogalMultDocs" mapped-name="frame:WEB-INF_xhtml_flx_votacaoVogalMultDocs" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores" name="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Teste julgado em painel" name="T1">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Revisar voto antecipadamente - Não Relator" name="Remeter a revisão"/>
+        <transition to="Conferir e liberar voto - não relator" name="Remeter para conferir e liberar voto"/>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstance.setVariable('pje:flx:votacaoVogal:exp:manipulaLiberacao', 'true')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds', '205,206')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService. gravaVariavelTarefa('pje:fluxo:votacaoColegiado:permiteAssinarVoto', false)}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:flx:votacaoVogal:transicaoAutomatica:papeis','magistrado,pje:magistrado')}"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:colegiado:aguardaSessao', true)}"/>
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('T1')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Revisar voto antecipadamente - Não Relator">
+        <task name="Revisar voto antecipadamente - Não Relator" swimlane="Revisores" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_votacaoVogal" mapped-name="frame:WEB-INF_xhtml_flx_votacaoVogal" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores" name="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Teste julgado em painel" name="T1">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Conferir e liberar voto - não relator" name="Remeter para conferir e liberar voto"/>
+        <transition to="Minutar voto antecipadamente - Não Relator" name="Devolver a minuta"/>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstance.setVariable('pje:flx:votacaoVogal:exp:manipulaLiberacao', 'true')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds', '205,206')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService. gravaVariavelTarefa('pje:fluxo:votacaoColegiado:permiteAssinarVoto', false)}"/>
+        </event>
+        <event type="task-create">
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('T1')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:flx:votacaoVogal:transicaoAutomatica:papeis','magistrado,pje:magistrado')}"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:colegiado:aguardaSessao', true)}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Votar antecipadamente - não relator">
+        <task name="Votar antecipadamente - não relator" swimlane="Magistrado" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_votacaoVogal" mapped-name="frame:WEB-INF_xhtml_flx_votacaoVogal" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores" name="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Teste julgado em painel" name="Aguardar a sessão"/>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstance.setVariable('pje:flx:votacaoVogal:exp:manipulaLiberacao', 'true')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds', '205,206')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService. gravaVariavelTarefa('pje:fluxo:votacaoColegiado:permiteAssinarVoto', false)}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Aguardar a sessão')}"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:flx:votacaoVogal:transicaoAutomatica:papeis','magistrado,pje:magistrado')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:colegiado:aguardaSessao', true)}"/>
+        </event>
+    </task-node>
+    <decision expression="#{'julgado' == processInstance.contextInstance.getVariable('pje:fluxo:colegiado:situacao') ? 'T1' : 'T2'}" name="Teste julgado em painel">
+        <transition to="Aguardando a sessão (outros julgadores)" name="T2"/>
+        <transition to="Término" name="T1"/>
+    </decision>
+    <task-node end-tasks="true" name="Conferir e liberar voto - não relator">
+        <task name="Conferir e liberar voto - não relator" swimlane="Magistrado" priority="3">
+            <controller>
+                <variable name="av_confirm_vt_n_relat" mapped-name="textAlert:av_confirm_vt_n_relat" access="read,write"/>
+                <variable name="WEB-INF_xhtml_flx_votacaoVogal" mapped-name="frame:WEB-INF_xhtml_flx_votacaoVogal" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores" name="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Revisar voto antecipadamente - Não Relator" name="Devolver a revisão"/>
+        <transition to="Aguardando a sessão (outros julgadores)" name="Aguardando a sessão (outros julgadores)"/>
+        <transition to="Teste julgado em painel" name="T1">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstance.setVariable('pje:flx:votacaoVogal:exp:manipulaLiberacao', 'true')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds', '205,206')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService. gravaVariavelTarefa('pje:fluxo:votacaoColegiado:permiteAssinarVoto', false)}"/>
+        </event>
+        <event type="task-create">
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('T1')}"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:colegiado:aguardaSessao', true)}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:colegiado:aguardaSessao', true)}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Aguardando a sessão (outros julgadores)">
+        <task name="Aguardando a sessão (outros julgadores)" swimlane="Magistrado" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_votacaoVogal" mapped-name="frame:WEB-INF_xhtml_flx_votacaoVogal" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores" name="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Teste julgado em painel" name="T1">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstance.setVariable('pje:flx:votacaoVogal:exp:manipulaLiberacao', 'true')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds', '205,206')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService. gravaVariavelTarefa('pje:fluxo:votacaoColegiado:permiteAssinarVoto', false)}"/>
+        </event>
+        <event type="task-end">
+            <action expression="#{tramitacaoProcessualService.apagaVariavelTarefa('cnj:fluxo:colegiado:aguardaSessao')}"/>
+        </event>
+        <event type="task-create">
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:colegiado:aguardaSessao', true)}"/>
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('T1')}"/>
+        </event>
+    </task-node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores">
+        <task name="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores" swimlane="Nó de Desvio - Fluxo - Apreciação colegiada por não relatores" priority="3"/>
+        <transition to="Conferir e liberar voto - não relator" name="Conferir e liberar voto - não relator"/>
+        <transition to="Aguardando a sessão (outros julgadores)" name="Aguardando a sessão (outros julgadores)"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Votar antecipadamente - não relator" name="Votar antecipadamente - não relator"/>
+        <transition to="Minutar voto antecipadamente - Não Relator" name="Minutar voto antecipadamente - Não Relator"/>
+        <transition to="Revisar voto antecipadamente - Não Relator" name="Revisar voto antecipadamente - Não Relator"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

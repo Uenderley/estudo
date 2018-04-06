@@ -1,0 +1,23 @@
+version: '2.0'
+
+services:
+
+ eureka-poc-server:
+  build: ./eureka-poc-server
+  ports:
+   - "8761:8761"
+  tty:
+    true
+  restart:
+    unless-stopped
+
+zuul-poc-server:
+  build: ./zuul-poc-server
+  ports:
+   - "8762:8762"
+  environment:
+    - REGISTRY_HOST=eureka-poc-server
+  tty:
+    true
+  restart:
+    unless-stopped

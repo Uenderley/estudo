@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="iso-8859-1"?><process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Intimação automática do MPE">
+    <description><![CDATA[versão 2.0 noite. correção 17/04/2017 (Rafael Matos)]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Intimação automática do MPE">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1338,84:1')}"/>
+    </swimlane>
+    <swimlane name="Solicitante">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1338,60:5948,60:5950,60:5483,4:5849,4:5197')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3" swimlane="Solicitante"/>
+        <transition name="Deslocar OrgaoJulgador" to="Deslocar OrgaoJulgador"/>
+    </start-state>  
+    <!-- NODES -->
+    <node name="Deslocar OrgaoJulgador">
+        <transition name="Solicitar Parecer do MPE" to="Solicitar Parecer do MPE"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.deslocarFluxoParaOrgaoDiverso()}" name="upd"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Solicitar Parecer do MPE">
+        <task name="Solicitar Parecer do MPE" priority="3" swimlane="Solicitante">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_documentosProcessuais" name="Processo_Fluxo_documentosProcessuais"/>
+            </controller>
+        </task>
+        <transition name="Não solicitar parecer" to="Término"/>
+        <transition name="Nó de Desvio - Fluxo - Intimação automática do MPE" to="Nó de Desvio - Fluxo - Intimação automática do MPE">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Solicitar Parecer MPE art. 364 CE cc art. 613 CPP" to="Solicitar parecer MPE art. 364 CE cc art. 613 CPP"/>
+        <transition name="Solicitar Parecer MPE art. 364 CE CC art. 610 CPP" to="Solicitar Parecer MPE art. 364 CE CC art. 610 CPP"/>
+        <transition name="Solicitar Parecer MPE art. 269 CE" to="Solicitar Parecer MPE art. 269 CE"/>
+        <transition name="Ao MPE para emissão de parecer" to="Solicitar Parecer MPE"/>
+    </task-node>
+    <node name="Solicitar parecer MPE art. 364 CE cc art. 613 CPP">
+        <transition name="Aguardar Manifestação - MPE" to="Aguardar Manifestação - MPE"/>
+        <event type="node-enter">
+            <action expression="#{atoComunicacaoService.intimarDestinatarioEletronicamente(tramitacaoProcessualService.recuperaProcesso().processo.idProcesso, 6326, 'S' , 0, 112, 60)}" name="upd"/>
+        </event>
+    </node>
+    <node name="Solicitar Parecer MPE art. 364 CE CC art. 610 CPP">
+        <transition name="Aguardar Manifestação - MPE" to="Aguardar Manifestação - MPE"/>
+        <event type="node-enter">
+            <action expression="#{atoComunicacaoService.intimarDestinatarioEletronicamente(tramitacaoProcessualService.recuperaProcesso().processo.idProcesso, 6326, 'S' , 0, 111, 60)}" name="upd"/>
+        </event>
+    </node>
+    <node name="Solicitar Parecer MPE art. 269 CE">
+        <transition name="Aguardar Manifestação - MPE" to="Aguardar Manifestação - MPE"/>
+        <event type="node-enter">
+            <action expression="#{atoComunicacaoService.intimarDestinatarioEletronicamente(tramitacaoProcessualService.recuperaProcesso().processo.idProcesso, 6326, 'S' , 0, 93, 60)}" name="upd"/>
+        </event>
+    </node>
+    <node name="Solicitar Parecer MPE">
+        <transition name="Aguardar Manifestação - MPE" to="Aguardar Manifestação - MPE"/>
+        <event type="node-enter">
+            <action expression="#{atoComunicacaoService.intimarDestinatarioEletronicamente(tramitacaoProcessualService.recuperaProcesso().processo.idProcesso, 6326, 'S' , 0, 113, 60)}" name="upd"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Aguardar Manifestação - MPE">
+        <task name="Aguardar Manifestação - MPE" priority="3" swimlane="Solicitante">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_documentosProcessuais" name="Processo_Fluxo_documentosProcessuais"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Intimação automática do MPE" to="Nó de Desvio - Fluxo - Intimação automática do MPE">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Finalizar fluxo" to="Término"/>
+    </task-node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Intimação automática do MPE">
+        <task name="Nó de Desvio - Fluxo - Intimação automática do MPE" priority="3" swimlane="Nó de Desvio - Fluxo - Intimação automática do MPE"/>
+        <transition name="Término" to="Término"/>
+        <transition name="Solicitar Parecer do MPE" to="Solicitar Parecer do MPE"/>
+        <transition name="Aguardar Manifestação - MPE" to="Aguardar Manifestação - MPE"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

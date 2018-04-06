@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Expedir a origem Corregedoria">
+    <description><![CDATA[Alterado em 14/11/17
+versão 2.0]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Unidade Fiscalização de Cadastro">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23972:5950,23972:5483,23972:1118')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Expedir a origem Corregedoria">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1,84:1003')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition to="Processos Expedidos a Origem" name="Processos Expedidos a Origem"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Processos Expedidos a Origem">
+        <task name="Processos Expedidos a Origem" swimlane="Unidade Fiscalização de Cadastro" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_documentosProcessuais" mapped-name="frame:Processo_Fluxo_documentosProcessuais" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Término" name="Término">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Nó de Desvio - Fluxo - Expedir a origem Corregedoria" name="Nó de Desvio - Fluxo - Expedir a origem Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Devolver processo a Origem" name="Devolver processo a Origem"/>
+        <transition to="Manter Processos arquivados" name="Manter Processos arquivados"/>
+    </task-node>
+    <task-node end-tasks="true" name="Processos Devolvidos a Origem">
+        <task name="Processos Devolvidos a Origem" swimlane="Unidade Fiscalização de Cadastro" priority="3">
+            <controller>
+                <variable name="Intercomunicacao_retornoProcesso" mapped-name="frame:Intercomunicacao_retornoProcesso" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Expedir a origem Corregedoria" name="Nó de Desvio - Fluxo - Expedir a origem Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Manter Processos arquivados" name="Manter Processos arquivados"/>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Manter Processos arquivados')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Devolver processo a Origem">
+        <task name="Devolver processo a Origem" swimlane="Unidade Fiscalização de Cadastro" priority="3">
+            <controller>
+                <variable name="Intercomunicacao_retornoProcesso" mapped-name="frame:Intercomunicacao_retornoProcesso" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Expedir a origem Corregedoria" name="Nó de Desvio - Fluxo - Expedir a origem Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Processos Devolvidos a Origem" name="Processos Devolvidos a Origem">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstanceUtil.setVariable('comboMotivoRemessa','18;37,38,39,40,90')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Processos Devolvidos a Origem')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Manter Processos arquivados">
+        <task name="Manter Processos arquivados" swimlane="Unidade Fiscalização de Cadastro" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_documentosProcessuais" mapped-name="frame:Processo_Fluxo_documentosProcessuais" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Expedir a origem Corregedoria" name="Nó de Desvio - Fluxo - Expedir a origem Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Desarquivar processo" name="Desarquivar processo"/>
+    </task-node>
+    <node name="Desarquivar processo">
+        <transition to="Término" name="Término"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(893).lancarMovimento()}"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Expedir a origem Corregedoria">
+        <task name="Nó de Desvio - Fluxo - Expedir a origem Corregedoria" swimlane="Nó de Desvio - Fluxo - Expedir a origem Corregedoria" priority="3"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Processos Expedidos a Origem" name="Processos Expedidos a Origem"/>
+        <transition to="Processos Devolvidos a Origem" name="Processos Devolvidos a Origem"/>
+        <transition to="Devolver processo a Origem" name="Devolver processo a Origem"/>
+        <transition to="Manter Processos arquivados" name="Manter Processos arquivados"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

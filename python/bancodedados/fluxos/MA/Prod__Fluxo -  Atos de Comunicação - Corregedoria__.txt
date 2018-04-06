@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Atos de Comunicação - Corregedoria">
+    <description><![CDATA[Alterado em 14/11/17
+Versão 2.0 - Noite]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Atos de Comunicação - Corregedoria">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1,84:1003')}"/>
+    </swimlane>
+    <swimlane name="Unidade Fiscalização de Cadastro">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23972:5950,23972:5483,23972:1118')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" swimlane="Unidade Fiscalização de Cadastro" priority="3"/>
+        <transition to="Preparar comunicação Corregedoria" name="Preparar comunicação Corregedoria"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Preparar comunicação Corregedoria">
+        <task name="Preparar comunicação Corregedoria" swimlane="Unidade Fiscalização de Cadastro" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_prepararExpediente" mapped-name="frame:Processo_Fluxo_prepararExpediente" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Atos de Comunicação - Corregedoria" name="Nó de Desvio - Fluxo - Atos de Comunicação - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="ForkComunicacao1" name="ForkComunicacao1">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Término" name="Cancelar"/>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('ForkComunicacao1')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setVariable('tiposDisponiveisIds','71,92,65,60,69,99,64,63,74')}"/>
+            <action name="upd" expression="#{preparaAtoComunicacaoAction.setMeiosComunicacao('P,T,E,S')}"/>
+        </event>
+    </task-node>
+    <fork name="ForkComunicacao1">
+        <transition to="É DJe?" name="É DJe?"/>
+        <transition to="É telefone ou pessoalmente?" name="É telefone ou pessoalmente?"/>
+        <transition to="é Sistema?" name="é Sistema?"/>
+    </fork>
+    <decision expression="#{comunicacaoProcessualAction.getExpedientesDiario().size() &gt; 0 ? 'T2' : 'JoinComunicacao1'}" name="É DJe?">
+        <transition to="JoinComunicacao1" name="JoinComunicacao1"/>
+        <transition to="Registrar Expedição de Documento" name="T2"/>
+    </decision>
+    <decision expression="#{comunicacaoProcessualAction.getExpedientesTelefone().size() &gt; 0 or        comunicacaoProcessualAction.getExpedientesPessoal().size() &gt; 0 ? 'T2' : 'JoinComunicacao1'}" name="É telefone ou pessoalmente?">
+        <transition to="JoinComunicacao1" name="JoinComunicacao1"/>
+        <transition to="Registrar Expedição de Documento por telefone" name="T2"/>
+    </decision>
+    <node name="Registrar Expedição de Documento">
+        <transition to="JoinComunicacao1" name="JoinComunicacao1"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{comunicacaoProcessualAction.enviarExpedientesLancarMovimentos('P','processoExpedienteAtual','#{preencherMovimento.deCodigo(60).associarAoDocumento(processoExpedienteAtual.getProcessoDocumento()).comComplementoDeCodigo(4).doTipoDominio().preencherComElementoDeCodigo(80).lancarMovimento()}')}"/>
+        </event>
+    </node>
+    <node name="Registrar Expedição de Documento por telefone">
+        <transition to="Deve Registrar Ciência?" name="Deve Registrar Ciência?"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(60).comComplementoDeCodigo(4).doTipoDominio().preencherComElementoDeCodigo(80).lancarMovimento()}"/>
+        </event>
+    </node>
+    <decision expression="#{comunicacaoProcessualAction.getExpedientesTelefone().size() &gt; 0 or       comunicacaoProcessualAction.getExpedientesPessoal().size() &gt; 0 ? 'Registrar Ciência' : 'JoinComunuicacao1'}" name="Deve Registrar Ciência?">
+        <transition to="JoinComunicacao1" name="JoinComunicacao1"/>
+        <transition to="Registrar Ciência" name="Registrar Ciência"/>
+    </decision>
+    <task-node end-tasks="true" name="Registrar Ciência">
+        <task name="Registrar Ciência" swimlane="Unidade Fiscalização de Cadastro" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_exped_registroCiencia" mapped-name="frame:WEB-INF_xhtml_flx_exped_registroCiencia" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Atos de Comunicação - Corregedoria" name="Nó de Desvio - Fluxo - Atos de Comunicação - Corregedoria">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="JoinComunicacao1" name="Prosseguir"/>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setVariable('pje:fluxo:registrociencia:meios','S,T,N')}"/>
+        </event>
+    </task-node>
+    <decision expression="#{comunicacaoProcessualAction.getExpedientesEletronico().size() &gt; 0 ? 'T1' : 'T2'}" name="é Sistema?">
+        <transition to="JoinComunicacao1" name="T2"/>
+        <transition to="encaminhar Via Sistema" name="T1"/>
+    </decision>
+    <node name="encaminhar Via Sistema">
+        <transition to="JoinComunicacao1" name="JoinComunicacao1"/>
+        <event type="node-enter">
+            <action expression="#{comunicacaoProcessualAction.enviarExpedientesLancarMovimentos('E', 'processoExpedienteAtual','#{preencherMovimento.deCodigo(60).associarAoDocumento(processoExpedienteAtual.getProcessoDocumento()).comComplementoDeCodigo(4).doTipoDominio().preencherComElementoDeCodigo(80).lancarMovimento()}')}"/>
+        </event>
+    </node>
+    <join name="JoinComunicacao1">
+        <transition to="Término" name="Término"/>
+    </join>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Atos de Comunicação - Corregedoria">
+        <task name="Nó de Desvio - Fluxo - Atos de Comunicação - Corregedoria" swimlane="Nó de Desvio - Fluxo - Atos de Comunicação - Corregedoria" priority="3"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Preparar comunicação Corregedoria" name="Preparar comunicação Corregedoria"/>
+        <transition to="Registrar Ciência" name="Registrar Ciência"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

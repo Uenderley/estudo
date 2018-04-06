@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Processar Atividades no Processo - JUD">
+    <description><![CDATA[Versão 2.0 Noite - 19/10/2017]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Unidade de Autuação e Distribuição">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('60:1338,60:5483,153:5948,153:5950,153:5483,153:1118,60:1118')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition to="Analisar Processo - JUD" name="Analisar Processo - JUD"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Analisar Processo - JUD">
+        <task name="Analisar Processo - JUD" swimlane="Unidade de Autuação e Distribuição" priority="3">
+            <controller/>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Reclassificar documentos anexos - JUD" name="Reclassificar documentos anexos"/>
+        <transition to="Digitalizar Documentos - JUD" name="Digitalizar Documentos"/>
+        <transition to="Retificar os dados do Processo" name="Retificar os dados do Processo"/>
+        <transition to="Término" name="Definir procedimento"/>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Verificar controle de prazos')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:controlaPrazoPublicacaoEmSessao',true)}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:controlaPrazoPublicacaoEmSessao')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Reclassificar documentos anexos - JUD">
+        <task name="Reclassificar documentos anexos - JUD" swimlane="Unidade de Autuação e Distribuição" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_documento_reclassificar" mapped-name="frame:Processo_Fluxo_documento_reclassificar" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - JUD" name="Retornar para Analisar Processo"/>
+        <transition to="Analisar Processo - JUD" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Digitalizar Documentos - JUD">
+        <task name="Digitalizar Documentos - JUD" swimlane="Unidade de Autuação e Distribuição" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_digitalizacao" mapped-name="frame:WEB-INF_xhtml_flx_digitalizacao" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - JUD" name="Retornar para Analisar Processo"/>
+        <transition to="Analisar Processo - JUD" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Retificar os dados do Processo">
+        <task name="Retificar os dados do Processo" swimlane="Unidade de Autuação e Distribuição" priority="4">
+            <controller>
+                <variable name="Processo_Fluxo_prevencao_analiseProcessosPreventos" mapped-name="frame:Processo_Fluxo_prevencao_analiseProcessosPreventos" access="read,write"/>
+                <variable name="var_avisoRetificacaoProcesso" mapped-name="textAlert:var_avisoRetificacaoProcesso" access="read,write"/>
+                <variable name="Processo_RetificacaoAutuacao_updateRetificacaoAutuacao" mapped-name="page:Processo_RetificacaoAutuacao_updateRetificacaoAutuacao" access="read,write"/>
+                <variable name="var_aviso" mapped-name="textAlert:var_aviso" access="read,write"/>
+                <variable name="WEB-INF_xhtml_flx_definicaoobjeto" mapped-name="frame:WEB-INF_xhtml_flx_definicaoobjeto" access="read,write"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+                <variable name="lote" mapped-name="movimentarLote:lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Lançar juntada de tipo de documento" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar Processo - JUD" name="Retornar ao Analisar Processo - JUD"/>
+        <event type="task-start">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','57')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pageParam','idProcesso='.concat(tramitacaoProcessualService.recuperaProcesso().idProcessoTrf))}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar juntada de tipo de documento">
+        <transition to="Analisar Processo - JUD" name="Analisar Processo - JUD"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).doTipoLivre().preencherComTexto(processoDocumentoManager.getUltimoProcessoDocumento(tipoProcessoDocumentoManager.consultarTodosDisponiveis(),tramitacaoProcessualService.recuperaProcesso().processo).getTipoProcessoDocumento().getTipoProcessoDocumento()).associarAoDocumento(processoDocumentoManager.getUltimoProcessoDocumento(tipoProcessoDocumentoManager.consultarTodosDisponiveis(),tramitacaoProcessualService.recuperaProcesso().processo)).lancarMovimento()}"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD">
+        <task name="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD" swimlane="Nó de Desvio - Fluxo - Processar Atividades no Processo - JUD" priority="3"/>
+        <transition to="Analisar Processo - JUD" name="Analisar Processo - JUD"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Digitalizar Documentos - JUD" name="Digitalizar Documentos - JUD"/>
+        <transition to="Reclassificar documentos anexos - JUD" name="Reclassificar documentos anexos - JUD"/>
+        <transition to="Retificar os dados do Processo" name="Retificar os dados do Processo"/>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

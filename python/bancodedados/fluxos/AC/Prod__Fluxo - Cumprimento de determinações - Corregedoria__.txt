@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Cumprimento de determinação">
+    <description><![CDATA[Versão 08 2017.]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Nó de Desvio - Fluxo - Cumprimento de determinações - Corregedoria">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1,84:1003')}"/>
+    </swimlane>
+    <swimlane name="Unidade Fiscalização de Cadastro">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('23972:5950,23972:5483,23972:1118')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3"/>
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+    </start-state>  
+    <!-- NODES -->
+    <decision expression="#{(tramitacaoProcessualService.temMovimento('3')) ||(tramitacaoProcessualService.temMovimento('193')) || (tramitacaoProcessualService.temMovimento('11009')) ? 'T1':'T2'}" name="testar encaminhado pelo Relator">
+        <transition to="Analisar determinação" name="T1"/>
+        <transition to="Analisar Processos" name="T2"/>
+    </decision>
+    <task-node end-tasks="true" name="Analisar Processos">
+        <task name="Analisar Processos" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_visualizarDecisao" mapped-name="frame:Processo_Fluxo_visualizarDecisao" access="read,write"/>
+                <variable name="lote" mapped-name="movimentarLote:lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Registrar arquivamento provisório" name="Registrar arquivamento provisório"/>
+        <transition to="Desentranhar documentos" name="Desentranhar documentos"/>
+        <transition to="Atualizar dados do processo" name="Atualizar dados do processo"/>
+        <transition to="Analisar multa eleitoral" name="Analisar multa eleitoral"/>
+        <transition to="Atos de Comunicação" name="Atos de Comunicação"/>
+        <transition to="Preparar atos de comunicação - Expresso" name="Preparar atos de comunicação - Expresso"/>
+        <transition to="Publicar e republicar processos" name="Publicar processos"/>
+        <transition to="Apensar e desapensar processos" name="Apensar e desapensar processos"/>
+        <transition to="Elaborar Documentos" name="Elaborar Documentos"/>
+        <transition to="Iniciar fluxo Elaborar Documentos Magistrado" name="Elaborar Documentos para Magistrado"/>
+        <transition to="Testa existência prevenção" name="Redistribuir Processo"/>
+        <transition to="Registrar sobrestamento ou suspensão" name="Registrar sobrestamento ou suspensão"/>
+        <transition to="Desmembrar processos" name="Desmembrar processos"/>
+        <transition to="Verificar controle de prazos" name="Verificar controle de prazos"/>
+        <transition to="Verificar expedientes abertos" name="Registrar ciência de intimação pessoal"/>
+        <transition to="Retirar pedido de liminar" name="Retirar pedido de urgência"/>
+        <transition to="Colocar pedido de urgência" name="Colocar pedido de urgência"/>
+        <transition to="Fechar expediente manualmente" name="Fechar expediente manualmente"/>
+        <transition to="Reclassificar documentos anexos" name="Reclassificar documentos"/>
+        <transition to="Digitalizar Documentos" name="Digitalizar Documentos"/>
+        <transition to="Término" name="Nada mais a Cumprir"/>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-create">
+            <action expression="#{taskInstanceUtil.setVariable('mostrarBotaoGravarNoFluxo','false')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Analisar determinação">
+        <task name="Analisar determinação" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_visualizarDecisao" mapped-name="frame:Processo_Fluxo_visualizarDecisao" access="read,write"/>
+                <variable name="lote" mapped-name="movimentarLote:lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Registrar arquivamento provisório" name="Registrar arquivamento provisório"/>
+        <transition to="Desentranhar documentos" name="Desentranhar documentos"/>
+        <transition to="Atualizar dados do processo" name="Atualizar dados do processo"/>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Analisar multa eleitoral" name="Analisar multa eleitoral"/>
+        <transition to="Atos de Comunicação" name="Atos de Comunicação"/>
+        <transition to="Preparar atos de comunicação - Expresso" name="Preparar atos de comunicação - Expresso"/>
+        <transition to="Publicar e republicar processos" name="Publicar processos"/>
+        <transition to="Apensar e desapensar processos" name="Apensar e desapensar processos"/>
+        <transition to="Elaborar Documentos" name="Elaborar Documentos"/>
+        <transition to="Iniciar fluxo Elaborar Documentos Magistrado" name="Elaborar Documentos para Magistrado"/>
+        <transition to="Testa existência prevenção" name="Redistribuir Processo"/>
+        <transition to="Registrar sobrestamento ou suspensão" name="Registrar sobrestamento ou suspensão"/>
+        <transition to="Desmembrar processos" name="Desmembrar processos"/>
+        <transition to="Verificar controle de prazos" name="Verificar controle de prazos"/>
+        <transition to="Verificar expedientes abertos" name="Registrar ciência de intimação pessoal"/>
+        <transition to="Retirar pedido de liminar" name="Retirar pedido de urgência"/>
+        <transition to="Colocar pedido de urgência" name="Colocar pedido de urgência"/>
+        <transition to="Fechar expediente manualmente" name="Fechar expediente manualmente"/>
+        <transition to="Reclassificar documentos anexos" name="Reclassificar documentos"/>
+        <transition to="Digitalizar Documentos" name="Digitalizar Documentos"/>
+        <transition to="Término" name="Nada mais a Cumprir"/>
+        <event type="task-create">
+            <action expression="#{taskInstanceUtil.setVariable('mostrarBotaoGravarNoFluxo','false')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Fechar expediente manualmente">
+        <task name="Fechar expediente manualmente" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_exped_encerrarExpedienteManual" mapped-name="frame:WEB-INF_xhtml_flx_exped_encerrarExpedienteManual" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+    </task-node>
+    <node name="Retirar pedido de liminar">
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+        <event type="node-leave">
+            <action name="upd" expression="#{processoTrfHome.update()}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.recuperaProcesso().setApreciadoTutelaLiminar('true')}"/>
+        </event>
+    </node>
+    <node name="Colocar pedido de urgência">
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+        <event type="node-leave">
+            <action name="upd" expression="#{processoTrfHome.update()}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.recuperaProcesso().setApreciadoTutelaLiminar('false')}"/>
+        </event>
+    </node>
+    <decision expression="#{comunicacaoProcessualAction.getExpedientesTelefone().size() &gt; 0 or        comunicacaoProcessualAction.getExpedientesPessoal().size() &gt; 0 ? 'T2' : 'T1'}" name="Verificar expedientes abertos">
+        <transition to="testar encaminhado pelo Relator" name="T1"/>
+        <transition to="Registrar ciência intimação pessoal" name="T2"/>
+    </decision>
+    <task-node end-tasks="true" name="Registrar ciência intimação pessoal">
+        <task name="Registrar ciência intimação pessoal" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_exped_registroCiencia" mapped-name="frame:WEB-INF_xhtml_flx_exped_registroCiencia" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Retornar para analisar determinação"/>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setVariable('pje:fluxo:registrociencia:meios','S,T,N')}"/>
+        </event>
+    </task-node>
+    <process-state name="Verificar controle de prazos">
+        <sub-process name="Fluxo - Controle de prazos" binding="late"/>
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+    </process-state>
+    <decision expression="#{analiseProcessosPreventosAction.existeProcessoPrevento() ? 'T1' : 'T2'}" name="Testa existência prevenção">
+        <transition to="Confirmar prevenção processual" name="T1"/>
+        <transition to="Redistribuir processo" name="T2"/>
+    </decision>
+    <task-node end-tasks="true" name="Confirmar prevenção processual">
+        <task name="Confirmar prevenção processual" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_prevencao_analiseProcessosPreventos" mapped-name="frame:Processo_Fluxo_prevencao_analiseProcessosPreventos" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Redistribuir processo" name="Redistribuir processo">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Cancelar"/>
+        <transition to="Ignorar prevenção" name="Ignorar prevenção"/>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Redistribuir processo')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:confirmaPrevencao', true)}"/>
+        </event>
+        <event type="task-end">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:prevencao:habilita-gravar', false)}"/>
+        </event>
+    </task-node>
+    <node name="Ignorar prevenção">
+        <transition to="Redistribuir processo" name="Redistribuir processo"/>
+    </node>
+    <task-node end-tasks="true" name="Redistribuir processo">
+        <task name="Redistribuir processo" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_abaRedistribuicaoProcesso" mapped-name="frame:Processo_Fluxo_abaRedistribuicaoProcesso" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="T1">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Devolver para analise de Determinação"/>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('T1')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:redistribuicaoPorEncaminhamento:validarCompetencia','false')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:redistribuicaoPorEncaminhamento:validarCompetencia')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Registrar arquivamento provisório">
+        <task name="Registrar arquivamento provisório" priority="3">
+            <controller>
+                <variable name="lote" mapped-name="movimentarLote:lote" access="read"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Lançar movimento de arquivamento provisório" name="Arquivar processo provisoriamente"/>
+        <transition to="testar encaminhado pelo Relator" name="Cancelar"/>
+        <event type="task-start">
+            <action name="Condicao do lancamento temporario de movimentos" expression="#{lancadorMovimentosService.setCondicaoLancamentoMovimentosTemporarioNoFluxo('#{false}')}"/>
+        </event>
+    </task-node>
+    <node name="Lançar movimento de arquivamento provisório">
+        <transition to="Manter processos arquivados provisoriamente" name="Manter processos arquivados provisoriamente"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(245).lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Manter processos arquivados provisoriamente">
+        <task name="Manter processos arquivados provisoriamente" priority="3">
+            <controller>
+                <variable name="lote" mapped-name="movimentarLote:lote" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Desarquivar Processo" name="Desarquivar Processo"/>
+        <event type="task-create">
+            <action expression="#{taskInstanceUtil.setVariable('mostrarBotaoGravarNoFluxo','false')}"/>
+        </event>
+    </task-node>
+    <node name="Desarquivar Processo">
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(893).lancarMovimento()}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Analisar multa eleitoral">
+        <task name="Analisar multa eleitoral" priority="3">
+            <controller>
+                <variable name="checkMultaEleitoral" mapped-name="radio_sim_nao:checkMultaEleitoral" access="read,write,required"/>
+            </controller>
+        </task>
+        <transition to="testar encaminhado pelo Relator" name="ANALISAR determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Tem multa" name="Prosseguir"/>
+    </task-node>
+    <decision expression="#{(org.jboss.seam.bpm.processInstance.contextInstance.getVariable('checkMultaEleitoral')) ? 'Aguardar multa eleitoral pendente' : 'Analisar determinação'}" name="Tem multa">
+        <transition to="Aguardar multa eleitoral pendente" name="Aguardar multa eleitoral pendente">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+    </decision>
+    <task-node end-tasks="true" name="Emitir certidão de multa eleitoral">
+        <task name="Emitir certidão de multa eleitoral" priority="3">
+            <controller>
+                <variable name="checkMultaPaga" mapped-name="radio_sim_nao:checkMultaPaga" access="read,write,required"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Tem multa paga" name="Tem multa paga">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','57')}"/>
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Tem multa paga')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',131,132)}"/>
+            <action name="upd" expression="#{editorTextoService.escopoDoDocumentoNaTarefa()}"/>
+        </event>
+    </task-node>
+    <decision expression="#{(org.jboss.seam.bpm.processInstance.contextInstance.getVariable('checkMultaPaga')) ? 'Analisar determinação' : 'Registrar informação multa eleitoral'}" name="Tem multa paga">
+        <transition to="Registrar informação multa eleitoral" name="Registrar informação multa eleitoral"/>
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+    </decision>
+    <task-node end-tasks="true" name="Registrar informação multa eleitoral">
+        <task name="Registrar informação multa eleitoral" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <description><![CDATA[]]></description>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="ANALISAR determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-start">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','57')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('ANALISAR determinação')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{editorTextoService.escopoDoDocumentoNaTarefa()}"/>
+            <action name="upd" expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',136)}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Aguardar multa eleitoral pendente">
+        <task name="Aguardar multa eleitoral pendente" priority="3"/>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Emitir certidão de multa eleitoral" name="Emitir certidão de multa eleitoral"/>
+    </task-node>
+    <task-node end-tasks="true" name="Atualizar dados do processo">
+        <task name="Atualizar dados do processo" priority="3">
+            <controller>
+                <variable name="Processo_RetificacaoAutuacao_updateRetificacaoAutuacao" mapped-name="page:Processo_RetificacaoAutuacao_updateRetificacaoAutuacao" access="read,write"/>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <description><![CDATA[dados]]></description>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Retornar"/>
+        <event type="task-start">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Analisar determinação')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','57')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pageParam','idProcesso='.concat(tramitacaoProcessualService.recuperaProcesso().idProcessoTrf))}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{editorTextoService.escopoDoDocumentoNaTarefa()}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Publicar e republicar processos">
+        <task name="Publicar processos" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_visualizarDecisao" mapped-name="frame:Processo_Fluxo_visualizarDecisao" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+    </task-node>
+    <process-state name="Atos de Comunicação">
+        <sub-process name="Fluxo - Ato de Comunicação" binding="late"/>
+        <description><![CDATA[]]></description>
+        <transition to="testar encaminhado pelo Relator" name="ANALISAR determinação"/>
+    </process-state>
+    <task-node end-tasks="true" name="Preparar atos de comunicação - Expresso">
+        <task name="Preparar atos de comunicação - Expresso" priority="3">
+            <controller>
+                <variable name="miniPac" mapped-name="miniPAC:miniPac" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Cancelar"/>
+        <transition to="Verificar controle de prazos" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('prepararAto:meiosComunicacoes','E,C,P,M,T,E,S')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:miniPac:DocJaExiste',true)}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{miniPacService.apagarVariaveisMiniPacContexto()}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Apensar e desapensar processos">
+        <task name="Apensar e desapensar processos" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_associarProcessos" mapped-name="frame:Processo_Fluxo_associarProcessos" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="ANALISAR determinação"/>
+        <event type="task-start">
+            <action name="Condicao do lancamento temporario de movimentos" expression="#{lancadorMovimentosService.setCondicaoLancamentoMovimentosTemporarioNoFluxo('#{false}')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Desentranhar documentos">
+        <task name="Desentranhar documentos" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="ANALISAR determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Retornar"/>
+        <event type="task-start">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','57')}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('ANALISAR determinação')}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',103)}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Desmembrar processos">
+        <task name="Desmembrar processos" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_abaDesmembrar" mapped-name="page:Processo_Fluxo_abaDesmembrar" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+    </task-node>
+    <task-node end-tasks="true" name="Registrar sobrestamento ou suspensão">
+        <task name="Registrar sobrestamento ou suspensão" priority="3"/>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Reativar processo suspenso ou sobrestado" name="Reativar processo suspenso ou sobrestado"/>
+        <event type="task-start">
+            <action name="Condicao do lancamento temporario de movimentos" expression="#{lancadorMovimentosService.setCondicaoLancamentoMovimentosTemporarioNoFluxo('#{false}')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Reclassificar documentos anexos">
+        <task name="Reclassificar documentos anexos" priority="3">
+            <controller>
+                <variable name="Processo_Fluxo_documento_reclassificar" mapped-name="frame:Processo_Fluxo_documento_reclassificar" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Cancelar"/>
+        <transition to="testar encaminhado pelo Relator" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Digitalizar Documentos">
+        <task name="Digitalizar Documentos" priority="3">
+            <controller>
+                <variable name="WEB-INF_xhtml_flx_digitalizacao" mapped-name="frame:WEB-INF_xhtml_flx_digitalizacao" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Cancelar"/>
+        <transition to="testar encaminhado pelo Relator" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+        </event>
+    </task-node>
+    <node name="Reativar processo suspenso ou sobrestado">
+        <transition to="testar encaminhado pelo Relator" name="Analisar determinação"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{preencherMovimento.deCodigo(849).lancarMovimento()}"/>
+        </event>
+    </node>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+        <task name="Nó de Desvio - Fluxo - Cumprimento de determinação" priority="3"/>
+        <transition to="testar encaminhado pelo Relator" name="ANALISAR determinação"/>
+        <transition to="Atualizar dados do processo" name="ATUALIZAR dados do processo"/>
+        <transition to="Desentranhar documentos" name="DESENTRANHAR documentos"/>
+        <transition to="Publicar e republicar processos" name="PUBLICAR e REPUBLICAR processos"/>
+        <transition to="Apensar e desapensar processos" name="APENSA e DESAPENSAR processos"/>
+        <transition to="Término" name="Término"/>
+        <transition to="Analisar multa eleitoral" name="Analisar multa eleitoral"/>
+        <transition to="Aguardar multa eleitoral pendente" name="Aguardar multa eleitoral pendente"/>
+        <transition to="Registrar arquivamento provisório" name="Registrar arquivamento provisório"/>
+        <transition to="Emitir certidão de multa eleitoral" name="Emitir certidão de multa eleitoral"/>
+        <transition to="Registrar informação multa eleitoral" name="Registrar informação multa eleitoral"/>
+        <transition to="Elaborar Documentos" name="Elaborar Documentos"/>
+        <transition to="Redistribuir processo" name="Redistribuir processo"/>
+        <transition to="Confirmar prevenção processual" name="Confirmar prevenção processual"/>
+        <transition to="Registrar sobrestamento ou suspensão" name="Registrar sobrestamento ou suspensão"/>
+        <transition to="Desmembrar processos" name="Desmembrar processos"/>
+        <transition to="Registrar ciência intimação pessoal" name="Registrar ciência intimação pessoal"/>
+        <transition to="Fechar expediente manualmente" name="Fechar expediente manualmente"/>
+        <transition to="Analisar Processos" name="Analisar Processos"/>
+        <transition to="Analisar determinação" name="Analisar determinação"/>
+        <transition to="Reclassificar documentos anexos" name="Reclassificar documentos anexos"/>
+        <transition to="Digitalizar Documentos" name="Digitalizar Documentos"/>
+        <transition to="Assinar documentos" name="Assinar documentos"/>
+        <transition to="Preparar atos de comunicação - Expresso" name="Preparar atos de comunicação - Expresso"/>
+        <transition to="Manter processos arquivados provisoriamente" name="Manter processos arquivados provisoriamente"/>
+    </task-node>
+    <task-node end-tasks="true" name="Elaborar Documentos">
+        <task name="Elaborar Documentos" priority="4">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="testar encaminhado pelo Relator" name="Retornar"/>
+        <transition to="lancamento de movimento" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Desbloquear editor - Elaborar Documentos" name="Desbloquear editor"/>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote(&quot;34,57,109,110,60,123,112,119&quot;)}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setVariable('mostrarBotaoGravarNoFluxo','false')}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','34,57,109,110,60,123,112,119,215')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,104,105,106,113,121,131,132,136,114,142,143,144)}"/>
+            <action name="upd" expression="#{editorTextoService.escopoDoDocumentoNaTarefa()}"/>
+        </event>
+    </task-node>
+    <node name="Iniciar fluxo Elaborar Documentos Magistrado">
+        <transition to="testar encaminhado pelo Relator" name="testar encaminhado pelo Relator"/>
+        <event type="node-enter">
+            <action expression="#{processoJudicialService.incluirNovoFluxo(tramitacaoProcessualService.recuperaProcesso(), 'FLX_ELABORA_DOC_SJD_MAGISTRADO')}"/>
+        </event>
+    </node>
+    <node name="Desbloquear editor - Elaborar Documentos">
+        <transition to="Elaborar Documentos" name="Elaborar Documentos"/>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+        </event>
+    </node>
+    <task-node end-tasks="true" name="Assinar documentos">
+        <task name="Assinar documentos" priority="4">
+            <controller>
+                <variable name="Processo_Fluxo_editorTexto" mapped-name="frame:Processo_Fluxo_editorTexto" access="read,write"/>
+            </controller>
+        </task>
+        <transition to="Nó de Desvio - Fluxo - Cumprimento de determinação" name="Nó de Desvio - Fluxo - Cumprimento de determinação">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="lancamento de movimento" name="Prosseguir">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition to="Elaborar Documentos" name="Devolver para correção"/>
+        <event type="task-start">
+            <action name="upd" expression="#{atividadesLoteService.setTipoDocumentoAssinarLote(&quot;34,57,109,110,60,123,112,119&quot;)}"/>
+            <action name="upd" expression="#{taskInstanceUtil.setVariable('mostrarBotaoGravarNoFluxo','false')}"/>
+        </event>
+        <event type="task-create">
+            <action name="upd" expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','34,57,109,110,60,123,112,119')}"/>
+            <action name="upd" expression="#{tramitacaoProcessualService.gravaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos','Retornar')}"/>
+        </event>
+        <event type="node-leave">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavelTarefa('pje:fluxo:transicao:dispensaRequeridos')}"/>
+        </event>
+        <event type="node-enter">
+            <action name="upd" expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,104,105,106,113,121,131,132,136,114,142,143,144)}"/>
+            <action name="upd" expression="#{editorTextoService.escopoDoDocumentoNaTarefa()}"/>
+        </event>
+    </task-node>
+    <node name="lancamento de movimento">
+        <transition to="testar encaminhado pelo Relator" name="testar encaminhado pelo Relator"/>
+        <event type="node-enter">
+            <action expression="#{preencherMovimento.deCodigo(581).comComplementoDeCodigo(4).doTipoLivre().preencherComTexto(processoDocumentoManager.getUltimoProcessoDocumento(tipoProcessoDocumentoManager.consultarTodosDisponiveis(),tramitacaoProcessualService.recuperaProcesso().processo).getTipoProcessoDocumento().getTipoProcessoDocumento()).associarAoDocumento(processoDocumentoManager.getUltimoProcessoDocumento(tipoProcessoDocumentoManager.consultarTodosDisponiveis(),tramitacaoProcessualService.recuperaProcesso().processo)).lancarMovimento()}"/>
+        </event>
+    </node>
+    <node name="Desbloquear editor">
+        <transition to="Atualizar dados do processo" name="Atualizar dados do processo"/>
+        <event type="node-enter">
+            <action name="upd" expression="#{tramitacaoProcessualService.apagaVariavel('pje:fluxo:editorTexto:minutaEditorAssinatura')}"/>
+        </event>
+    </node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>

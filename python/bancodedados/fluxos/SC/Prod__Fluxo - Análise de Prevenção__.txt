@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="iso-8859-1"?><process-definition xmlns="urn:jbpm.org:jpdl-3.2" name="Fluxo - Análise de Prevenção">
+    <description><![CDATA[Versão 2.0 - Noite]]></description>  
+    <!-- SWIMLANES -->
+    <swimlane name="Magistrado">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('46:1469,3:1469,4:5849')}"/>
+    </swimlane>
+    <swimlane name="Nó de Desvio - Fluxo - Análise de Prevenção">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('84:1')}"/>
+    </swimlane>
+    <swimlane name="Revisor">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('5:5197,4:5849')}"/>
+    </swimlane>
+    <swimlane name="Assessor">
+        <assignment pooled-actors="#{localizacaoAssignment.getPooledActors('4:5849,4:5197')}"/>
+    </swimlane>  
+    <!-- START-STATE -->
+    <start-state name="Início">
+        <task name="Tarefa inicial" priority="3" swimlane="Assessor"/>
+        <transition name="Minutar despacho prevenção" to="Minutar despacho prevenção"/>
+    </start-state>  
+    <!-- NODES -->
+    <task-node end-tasks="true" name="Minutar despacho prevenção">
+        <task name="Minutar despacho prevenção" priority="3" swimlane="Assessor">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_prevencao_analiseProcessosPreventos" name="Processo_Fluxo_prevencao_analiseProcessosPreventos"/>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_editorTexto" name="Processo_Fluxo_editorTexto"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Análise de Prevenção" to="Nó de Desvio - Fluxo - Análise de Prevenção">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Revisar despacho prevenção" to="Revisar despacho prevenção">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Remeter ao ministro para assinatura" to="Assinar despacho prevenção"/>
+        <transition name="Descartar Fluxo" to="Término"/>
+        <event type="task-start">
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Revisar despacho prevenção')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','63,64')}" name="upd"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',72,84)}" name="upd"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Revisar despacho prevenção">
+        <task name="Revisar despacho prevenção" priority="3" swimlane="Revisor">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_prevencao_analiseProcessosPreventos" name="Processo_Fluxo_prevencao_analiseProcessosPreventos"/>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_editorTexto" name="Processo_Fluxo_editorTexto"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Análise de Prevenção" to="Nó de Desvio - Fluxo - Análise de Prevenção">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Remeter ao ministro para assinatura" to="Assinar despacho prevenção">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Devolver a minuta" to="Minutar despacho prevenção"/>
+        <event type="task-start">
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Remeter ao ministro para assinatura')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','63,64')}" name="upd"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',72,84)}" name="upd"/>
+        </event>
+    </task-node>
+    <task-node end-tasks="true" name="Assinar despacho prevenção">
+        <task name="Assinar despacho prevenção" priority="3" swimlane="Magistrado">
+            <controller>
+                <variable access="read,write" mapped-name="frame:Processo_Fluxo_editorTexto" name="Processo_Fluxo_editorTexto"/>
+            </controller>
+        </task>
+        <transition name="Nó de Desvio - Fluxo - Análise de Prevenção" to="Nó de Desvio - Fluxo - Análise de Prevenção">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Prosseguir" to="Subfluxo Lançar Movimento">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Devolver a revisão" to="Revisar despacho prevenção"/>
+        <event type="task-start">
+            <action expression="#{taskInstanceUtil.setFrameDefaultTransition('Prosseguir')}" name="upd"/>
+            <action expression="#{tramitacaoProcessualService.gravaVariavelTarefa('tiposDisponiveisIds','63,64')}" name="upd"/>
+        </event>
+        <event type="node-enter">
+            <action expression="#{modeloDocumento.set('Processo_Fluxo_editorTexto',72,84)}" name="upd"/>
+        </event>
+    </task-node>
+    <process-state name="Subfluxo Lançar Movimento">
+        <sub-process binding="late" name="Fluxo - Lançamento de Movimentos"/>
+        <transition name="Prosseguir" to="Término"/>
+        <transition name="Nó de Desvio - Fluxo - Análise de Prevenção" to="Nó de Desvio - Fluxo - Análise de Prevenção">
+            <condition expression="#{true}"/>
+        </transition>
+        <event type="node-enter">
+            <action expression="#{tramitacaoProcessualService.gravaVariavel('pje:fluxo:prevento', true)}"/>
+        </event>
+    </process-state>
+    <end-state name="Término"/>
+    <task-node end-tasks="true" name="Nó de Desvio - Fluxo - Análise de Prevenção">
+        <task name="Nó de Desvio - Fluxo - Análise de Prevenção" priority="3" swimlane="Nó de Desvio - Fluxo - Análise de Prevenção"/>
+        <transition name="Término" to="Término"/>
+        <transition name="Minutar despacho prevenção" to="Minutar despacho prevenção"/>
+        <transition name="Revisar despacho prevenção" to="Revisar despacho prevenção"/>
+        <transition name="Assinar despacho prevenção" to="Assinar despacho prevenção">
+            <condition expression="#{true}"/>
+        </transition>
+        <transition name="Subfluxo Lançar Movimento" to="Subfluxo Lançar Movimento">
+            <condition expression="#{true}"/>
+        </transition>
+    </task-node>  
+    <!-- PROCESS-EVENTS -->
+    <event type="superstate-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="before-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-created">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-create">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="transition">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-assign">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="after-signal">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="timer">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="task-start">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="subprocess-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="process-end">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="superstate-leave">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>
+    <event type="node-enter">
+        <script>br.com.infox.ibpm.util.JbpmEvents.raiseEvent(executionContext)</script>
+    </event>  
+    <!-- ACTIONS --> 
+</process-definition>
