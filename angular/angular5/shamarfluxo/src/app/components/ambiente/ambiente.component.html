@@ -1,0 +1,18 @@
+<div class="form-group">
+  <label>Selecione os ambientes para serem atualizados</label>
+  <div *ngIf="ambientes.length">
+    <input type="checkbox" name="seltdambientes" [(ngModel)]="selTodosAmbientes" (change)="selecionarTodosAmbientes($event)" />
+    <label for="seltdambientes">Selecionar todos os ambientes.</label>
+    <br>
+
+    <span *ngFor="let ambiente of ambientes" class="checkbox">
+            <label>
+              <input type="checkbox"
+                     name="ambientes"
+                     [(ngModel)]="ambiente.checked"/>
+                     {{ambiente.ufTribunal}}
+              <br>
+             </label>
+         </span>
+  </div>
+</div>

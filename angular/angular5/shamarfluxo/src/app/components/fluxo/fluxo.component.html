@@ -1,0 +1,18 @@
+<div class="form-group">
+  <label>Selecione os fluxos para serem atualizados</label>
+  <div *ngIf="fluxos.length">
+    <input type="checkbox" name="seltdfluxos" [(ngModel)]="selTodosFluxos" (change)="selecionarTodosFluxos($event)" />
+    <label for="seltdfluxos">Selecionar todos os fluxos.</label>
+    <br>
+
+    <span *ngFor="let fluxo of fluxos" class="checkbox">
+          <label>
+            <input type="checkbox"
+                   name="fluxos"
+                   [(ngModel)]="fluxo.checked"/>
+                   {{fluxo.nome}}
+            <br>
+           </label>
+       </span>
+  </div>
+</div>
