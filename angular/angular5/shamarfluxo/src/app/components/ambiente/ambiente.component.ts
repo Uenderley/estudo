@@ -12,7 +12,7 @@ import { Ambiente } from '../../models/ambiente';
 export class AmbienteComponent implements OnInit {
 
   private ambientes: Ambiente[];
-
+  private selTodosAmbientes: boolean;
   constructor(private ambienteService: AmbienteService) { }
 
   ngOnInit() {
@@ -22,6 +22,18 @@ export class AmbienteComponent implements OnInit {
   getAmbientes(): void{
     this.ambienteService.getAmbientes()
     .subscribe(ambientes => this.ambientes = ambientes);
+  }
+
+  selecionarTodosAmbientes(): void {
+    if(this.selTodosAmbientes){
+      this.ambientes.forEach(function iterator(value){
+        value.checked = true;
+      });
+    } else {
+      this.ambientes.forEach(function iterator(value){
+        value.checked = false;
+      });
+    }
   }
 
 }

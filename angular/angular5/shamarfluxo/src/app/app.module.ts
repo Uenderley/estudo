@@ -11,6 +11,8 @@ import { FluxoService } from './services/fluxo.service';
 import { GitComponent } from './components/git/git.component';
 import { AmbienteComponent } from './components/ambiente/ambiente.component';
 import { AmbienteService } from './services/ambiente.service';
+import { HeaderComponent } from './components/header/header.component';
+import { AppRoutingModule } from './/app-routing.module';
 
 
 @NgModule({
@@ -18,12 +20,14 @@ import { AmbienteService } from './services/ambiente.service';
     AppComponent,
     FluxoComponent,
     GitComponent,
-    AmbienteComponent
+    AmbienteComponent,
+    HeaderComponent
   ],
   imports: [
     BrowserModule,
     FormsModule,
-    HttpClientModule
+    HttpClientModule,
+    AppRoutingModule
   ],
   providers: [GitService, FluxoService, AmbienteService],
   bootstrap: [AppComponent]
