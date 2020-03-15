@@ -11,10 +11,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.opentracing.Traced;
 
 import br.com.desafio.model.Cotacao;
 import br.com.desafio.service.CotacaoService;
 
+@Traced
 @Path("/cotacoes")
 public class CotacaoResource {
 	@Inject CotacaoService cotacaoService;

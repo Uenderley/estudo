@@ -9,6 +9,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.bson.Document;
+import org.eclipse.microprofile.opentracing.Traced;
 import org.mongojack.JacksonMongoCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import br.com.desafio.model.Cotacao;
 import br.com.desafio.model.CotacaoBancoCentral;
 import br.com.desafio.util.CotacaoConverter;
 
+@Traced
 @ApplicationScoped
 public class CotacaoService {
 	@Inject
