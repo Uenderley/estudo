@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  quarkus-build:
+    build:
+      context: .
+      dockerfile: src/main/docker/Dockerfile
+    depends_on:
+      - mongo-express
+      - mongo
+    environment:
+      DB_MONGO: mongodb://mongo:27017
+    ports:
+      - "8080:8080"
+    networks:
+      - mongo-compose-network
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    environment:
+      MONGODB_DATABASE: desafio
+    ports:
+      - "27017:27017"
+      - "28017:28017"
+    networks:
+      - mongo-compose-network
+  mongo-express:
+    container_name: mongo-express
+    image: mongo-express
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: '"true"'
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_AUTH_DATABASE: desafio
+    depends_on:
+      - mongo
+    links:
+      - mongo
+    networks:
+      - mongo-compose-network
+networks:
+  mongo-compose-network:
+    driver: bridge
