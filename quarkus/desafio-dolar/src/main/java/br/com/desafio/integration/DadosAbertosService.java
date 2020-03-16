@@ -7,6 +7,7 @@ import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.eclipse.microprofile.opentracing.Traced;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import br.com.desafio.model.CotacaoBancoCentral;
 
+@Traced
 @ApplicationScoped
 public class DadosAbertosService {
 	

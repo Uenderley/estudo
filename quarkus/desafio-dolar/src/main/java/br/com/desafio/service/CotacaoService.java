@@ -9,6 +9,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.bson.Document;
+import org.eclipse.microprofile.metrics.annotation.Counted;
 import org.eclipse.microprofile.opentracing.Traced;
 import org.mongojack.JacksonMongoCollection;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ public class CotacaoService {
 	
     private final Logger log = LoggerFactory.getLogger(CotacaoService.class);
 
-	
+    @Counted(name = "contador listar todos")
 	public List<Cotacao> listar(){
 		List<Cotacao> cotacoes = new ArrayList<>();
 		
@@ -53,6 +54,7 @@ public class CotacaoService {
         return cotacoes;
 	}
 	
+	@Counted(name = "contador busca por data especifica")
 	public Cotacao listar(String data){
 		CotacaoBancoCentral cotacaoBancoCentral = dadosAbertosService.obter(data);
 		
@@ -62,6 +64,7 @@ public class CotacaoService {
         return cotacao;
 	}
 	
+	@Counted(name = "contador busca por periodo")
 	public List<Cotacao> listar(String dataInicio, String dataFim){
 		LocalDateTime dataInicioIntegracao = LocalDateTime.now();
 

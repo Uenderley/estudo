@@ -57,6 +57,24 @@ services:
       - 9411:9411
     networks:
       - mongo-compose-network
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus  
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+    links:
+      - quarkus-build:quarkus-build
+    depends_on:
+      - quarkus-build
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - mongo-compose-network
 networks:
   mongo-compose-network:
     driver: bridge
