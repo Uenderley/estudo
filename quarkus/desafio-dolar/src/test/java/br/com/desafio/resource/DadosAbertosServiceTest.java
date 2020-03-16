@@ -11,25 +11,25 @@ import br.com.desafio.integration.DadosAbertosService;
 import br.com.desafio.model.CotacaoBancoCentral;
 import io.quarkus.test.junit.QuarkusTest;
 
-//@QuarkusTest
+@QuarkusTest
 public class DadosAbertosServiceTest {
 	
-	//@Inject
+	@Inject
 	private DadosAbertosService dadosAbertosService;
 	
-	//@Test
+	@Test
 	public void testConsultarDadosAbertosPorPeriodoEndpoint() {
-		Assertions.assertNotNull(dadosAbertosService.obterCotacoes("'02-02-2020'", "'02-06-2020'"));
+		Assertions.assertNotNull(dadosAbertosService.obterCotacoes("02-02-2020", "02-06-2020"));
 	}
 	
-	//@Test
+	@Test
 	public void testConsultarDadosAbertosDataCertaEndpoint() {
-		//Assertions.assertNotNull(dadosAbertosService.obter("'02-02-2020'"));
+		//Assertions.assertNotNull(dadosAbertosService.obter("02-02-2020"));
 	}
 	
-	//@Test
+	@Test
 	public void testConsultarDadosAbertosComVerificacaoDeValor() {
-		List<CotacaoBancoCentral> cotacoes = dadosAbertosService.obterCotacoes("'02-02-2020'", "'02-06-2020'");
+		List<CotacaoBancoCentral> cotacoes = dadosAbertosService.obterCotacoes("02-02-2020", "02-06-2020");
 		
 		cotacoes.forEach(cotacao -> {
 			System.out.print(" Cotacao ----- " +cotacao.getDataHoraCotacao());

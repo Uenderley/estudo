@@ -41,7 +41,8 @@ public class DadosAbertosService {
 		
 		List<CotacaoBancoCentral> cotacoesBancoCentral = new ArrayList<>();
 		
-		String dados = dadosAbertosRestClient.getByDataInicialEDataFinalCotacao(dataInicial, dataFinal);
+		String dados = dadosAbertosRestClient.getByDataInicialEDataFinalCotacao(
+												colocarAspas(dataInicial), colocarAspas(dataFinal));
 		
 		ObjectMapper mapper = new ObjectMapper();
 		try {
@@ -71,7 +72,7 @@ public class DadosAbertosService {
 		
 		CotacaoBancoCentral cotacao = new CotacaoBancoCentral();
 		
-		String dados = dadosAbertosRestClient.getByData(data);
+		String dados = dadosAbertosRestClient.getByData(colocarAspas(data));
 		
 		ObjectMapper mapper = new ObjectMapper();
 		try {
@@ -87,5 +88,13 @@ public class DadosAbertosService {
 			e1.printStackTrace();
 		}
 		return cotacao;
+	}
+	
+	private String colocarAspas(String data) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("'");
+		sb.append(data);
+		sb.append("'");
+		return sb.toString();
 	}
 }

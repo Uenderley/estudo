@@ -20,6 +20,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 
+import br.com.desafio.exception.APIIntegrationException;
 import br.com.desafio.integration.DadosAbertosService;
 import br.com.desafio.model.Cotacao;
 import br.com.desafio.model.CotacaoBancoCentral;
@@ -56,19 +57,30 @@ public class CotacaoService {
 	
 	@Counted(name = "contador busca por data especifica")
 	public Cotacao listar(String data){
-		CotacaoBancoCentral cotacaoBancoCentral = dadosAbertosService.obter(data);
+		CotacaoBancoCentral cotacaoBancoCentral = null;
+		
+		try {
+			cotacaoBancoCentral = dadosAbertosService.obter(data);
+		} catch (Exception e) {
+			log.error("Houve um erro ao consultar a API");
+			throw new APIIntegrationException(e.getMessage());
+		}
 		
 		Cotacao cotacao = CotacaoConverter.convert(cotacaoBancoCentral);
 		salvar(cotacao);
-		
         return cotacao;
 	}
 	
 	@Counted(name = "contador busca por periodo")
-	public List<Cotacao> listar(String dataInicio, String dataFim){
+	public List<Cotacao> listar(String dataInicio, String dataFim) {
 		LocalDateTime dataInicioIntegracao = LocalDateTime.now();
-
-		List<CotacaoBancoCentral> cotacoesBancoCentral = dadosAbertosService.obterCotacoes(dataInicio, dataFim);
+		List<CotacaoBancoCentral> cotacoesBancoCentral = null;
+		try {
+			cotacoesBancoCentral = dadosAbertosService.obterCotacoes(dataInicio, dataFim);
+		}catch (Exception e) {
+			log.error("Houve um erro ao consultar a API");
+			throw new APIIntegrationException(e.getMessage());
+		}
 		
 		LocalDateTime dataFimIntegracao = LocalDateTime.now();
 		Duration duration = Duration.between(dataInicioIntegracao, dataFimIntegracao);
