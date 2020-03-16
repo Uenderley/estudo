@@ -1,5 +1,9 @@
 version: '3'
 
+volumes:
+    prometheus_data: {}
+  #  grafana_data: {}
+
 services:
   quarkus-build:
     build:
@@ -75,6 +79,20 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
     networks:
       - mongo-compose-network
+  grafana:
+    image: grafana/grafana
+    user: "104"
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    env_file:
+      - ./grafana/config.monitoring
+    networks:
+      - mongo-compose-network
+    restart: always
 networks:
   mongo-compose-network:
     driver: bridge
