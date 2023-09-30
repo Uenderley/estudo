@@ -1,0 +1,127 @@
+openapi: "3.0.0"
+info:
+  title: JSONPlaceholder API
+  version: "1.0"
+  description: A fake online REST API for testing and prototyping.
+servers:
+  - url: http://localhost:8090/api/
+paths:
+  /posts:
+    post:
+      summary: Create a Post
+      description: Create a new post in JSONPlaceholder.
+      tags:
+        - Mock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  description: The ID of the user.
+                  example: 1
+                title:
+                  type: string
+                  description: The title of the post.
+                  example: Teste
+                body:
+                  type: string
+                  description: The body content of the post.
+                  example: Teste
+      responses:
+        '201':
+          description: Created. The post has been successfully created.
+          content:
+            application/json:
+              example:
+                userId: 1
+                id: 101
+                title: Teste
+                body: Teste
+        '400':
+          description: Bad Request. The request could not be understood or was missing required parameters.
+          content:
+            application/json:
+              example:
+                error: "Invalid input"
+  /posts/{postId}:
+    get:
+      summary: Retrieve a Post
+      description: Retrieve an existing post in JSONPlaceholder by ID.
+      tags:
+        - Mock
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          description: The ID of the post to retrieve.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK. The post has been successfully retrieved.
+          content:
+            application/json:
+              example:
+                userId: 1
+                id: 1
+                title: "Example Title"
+                body: "Example Body"
+        '404':
+          description: Not Found. The post with the specified ID was not found.
+          content:
+            application/json:
+              example:
+                error: "Post not found"
+    patch:
+      summary: Update a Post
+      description: Update an existing post in JSONPlaceholder.
+      tags:
+        - Mock
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          description: The ID of the post to update.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: The new title of the post.
+                  example: Updated Title
+                body:
+                  type: string
+                  description: The new body content of the post.
+                  example: Updated Body
+      responses:
+        '200':
+          description: OK. The post has been successfully updated.
+          content:
+            application/json:
+              example:
+                userId: 1
+                id: 1
+                title: Updated Title
+                body: Updated Body
+        '400':
+          description: Bad Request. The request could not be understood or was missing required parameters.
+          content:
+            application/json:
+              example:
+                error: "Invalid input"
+        '404':
+          description: Not Found. The post with the specified ID was not found.
+          content:
+            application/json:
+              example:
+                error: "Post not found"

@@ -1,0 +1,38 @@
+openapi: "3.0.0"
+info:
+  title: Project Nationalize.io API
+  version: "1.0"
+  description: An API to predict the nationality of a given name.
+servers:
+  - url: http://localhost:8080/api/
+paths:
+  /:
+    get:
+      summary: Predict the nationality of a given name.
+      tags:
+        - Name
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: The name for which to predict the nationality.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A successful response returns the predicted nationalities for the given name.
+          content:
+            application/json:
+              example:
+                name: "michael"
+                country:
+                  - country_id: "US"
+                    probability: 0.82
+                  - country_id: "IE"
+                    probability: 0.12
+        '400':
+          description: Bad Request. Occurs when the 'name' parameter is not provided.
+          content:
+            application/json:
+              example:
+                error: "missing name parameter"
